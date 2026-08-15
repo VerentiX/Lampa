@@ -163,6 +163,7 @@ object AppConfig {
     const val SUBSCRIPTION_PRIMARY_HOST = "gw.zizmos.ru"
     const val SUBSCRIPTION_FALLBACK_HOST = "sub.subhotig.buzz"
     const val LAMPA_SITE_URL = "https://hattabych.ru"
+    const val LAMPA_APP_UPDATE_API_URL = "$LAMPA_SITE_URL/api/app/latest"
     const val LAMPA_TELEGRAM_BOT = "hattabych_vpn_bot"
     const val LAMPA_TELEGRAM_URL = "https://t.me/$LAMPA_TELEGRAM_BOT"
     const val LAMPA_SUBSCRIPTION_USER_AGENT = "Lampa-Mobile"
