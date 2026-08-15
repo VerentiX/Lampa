@@ -1,0 +1,409 @@
+package com.v2ray.ang
+
+
+object AppConfig {
+
+    /** The application's package name. */
+    const val ANG_PACKAGE = BuildConfig.APPLICATION_ID
+    const val TAG = BuildConfig.APPLICATION_ID
+
+    /** Directory names used in the app's file system. */
+    const val DIR_ASSETS = "assets"
+
+    const val WEBDAV_BACKUP_DIR = "backups"
+    const val WEBDAV_BACKUP_FILE_NAME = "backup_ng.zip"
+
+    /** Legacy configuration keys. */
+    const val ANG_CONFIG = "ang_config"
+
+    // Default subscription ID for ungrouped servers
+    const val DEFAULT_SUBSCRIPTION_ID = "__default_subscription__"
+
+    /** Preferences mapped to MMKV storage. */
+    const val PREF_SNIFFING_ENABLED = "pref_sniffing_enabled"
+    const val PREF_ROUTE_ONLY_ENABLED = "pref_route_only_enabled"
+    const val PREF_PER_APP_PROXY = "pref_per_app_proxy"
+    const val PREF_PER_APP_PROXY_SET = "pref_per_app_proxy_set"
+    const val PREF_SPLIT_TUNNEL_APP_CACHE = "pref_split_tunnel_app_cache"
+    const val PREF_BYPASS_APPS = "pref_bypass_apps"
+    const val PREF_LOCAL_DNS_ENABLED = "pref_local_dns_enabled"
+    const val PREF_FAKE_DNS_ENABLED = "pref_fake_dns_enabled"
+    const val PREF_APPEND_HTTP_PROXY = "pref_append_http_proxy"
+    const val PREF_LOCAL_DNS_PORT = "pref_local_dns_port"
+    const val PREF_VPN_DNS = "pref_vpn_dns"
+    const val PREF_VPN_BYPASS_LAN = "pref_vpn_bypass_lan"
+    const val PREF_VPN_INTERFACE_ADDRESS_CONFIG_INDEX = "pref_vpn_interface_address_config_index"
+    const val PREF_VPN_MTU = "pref_vpn_mtu"
+    /** Master switch: when false, always use built-in default MTU (ignores manual/adaptive). */
+    const val PREF_CUSTOM_MTU_ENABLED = "pref_custom_mtu_enabled"
+    const val PREF_ADAPTIVE_MTU_ENABLED = "pref_adaptive_mtu_enabled"
+    /** Persisted path-probed TUN MTU for Wi‑Fi (used only when adaptive MTU is on). */
+    const val PREF_ADAPTIVE_MTU_WIFI = "pref_adaptive_mtu_wifi"
+    /** Persisted path-probed TUN MTU for cellular (used only when adaptive MTU is on). */
+    const val PREF_ADAPTIVE_MTU_CELLULAR = "pref_adaptive_mtu_cellular"
+    const val PREF_PROBE_MTU_WIFI = "pref_probe_mtu_wifi"
+    const val PREF_PROBE_MTU_CELLULAR = "pref_probe_mtu_cellular"
+    const val PREF_NOTIFICATION_SHOW_MTU = "pref_notification_show_mtu"
+    const val PREF_NOTIFICATION_SHOW_ACTIVE_OUTBOUND = "pref_notification_show_active_outbound"
+    const val PREF_NOTIFICATION_SHOW_ROUTING_MODE = "pref_notification_show_routing_mode"
+    const val PREF_NOTIFICATION_SHOW_BATTERY_USAGE = "pref_notification_show_battery_usage"
+    const val PREF_CONNECTION_DIAGNOSTICS_ENABLED = "pref_connection_diagnostics_enabled"
+    const val PREF_CONNECTION_JOURNAL = "pref_connection_journal"
+    /** Opt-in sparse failure breadcrumbs (off by default; low battery cost). */
+    const val PREF_FAILURE_LOG_ENABLED = "pref_failure_log_enabled"
+    const val PREF_FAILURE_LOG_VIEW = "pref_failure_log_view"
+    const val PREF_ROUTING_DOMAIN_STRATEGY = "pref_routing_domain_strategy"
+    const val PREF_ROUTING_RULESET = "pref_routing_ruleset"
+    const val PREF_MUX_ENABLED = "pref_mux_enabled"
+    const val PREF_MUX_CONCURRENCY = "pref_mux_concurrency"
+    const val PREF_MUX_XUDP_CONCURRENCY = "pref_mux_xudp_concurrency"
+    const val PREF_MUX_XUDP_QUIC = "pref_mux_xudp_quic"
+    const val PREF_FRAGMENT_ENABLED = "pref_fragment_enabled"
+    const val PREF_FRAGMENT_PACKETS = "pref_fragment_packets"
+    const val PREF_FRAGMENT_LENGTH = "pref_fragment_length"
+    const val PREF_FRAGMENT_INTERVAL = "pref_fragment_interval"
+    const val PREF_FRAGMENT_MAXSPLIT = "pref_fragment_maxsplit"
+    const val SUBSCRIPTION_UPDATE_TASK_NAME = "subscription_updater"
+    const val APP_UPDATE_TASK_NAME = "zimavpn_app_update_v1"
+    const val GEO_BOOTSTRAP_TASK_NAME = "zima_geo_bootstrap_v5"
+    const val GEO_PERIODIC_TASK_NAME = "zima_geo_daily_update_v1"
+    const val GEO_MANUAL_TASK_NAME = "zima_geo_manual_update_v1"
+    const val SUBSCRIPTION_MIN_INTERVAL_MINUTES = 15L
+    /** Refresh all subscriptions every 6 hours while VPN/core is running in background. */
+    const val SUBSCRIPTION_VPN_BACKGROUND_INTERVAL_MS = 6 * 60 * 60 * 1000L
+    const val PREF_LAST_VPN_SUB_REFRESH_AT = "pref_last_vpn_sub_refresh_at"
+    const val PREF_CONFIRM_REMOVE = "pref_confirm_remove"
+    const val PREF_START_SCAN_IMMEDIATE = "pref_start_scan_immediate"
+    const val PREF_DOUBLE_COLUMN_DISPLAY = "pref_double_column_display"
+    const val PREF_GROUP_ALL_DISPLAY = "pref_group_all_display"
+    const val PREF_LANGUAGE = "pref_language"
+    const val PREF_UI_MODE_NIGHT = "pref_ui_mode_night"
+    const val PREF_UI_WINTER_ANIMATIONS = "pref_ui_winter_animations"
+    const val PREF_IPV6_ENABLED = "pref_ipv6_enabled"
+    const val PREF_PREFER_IPV6 = "pref_prefer_ipv6"
+    const val PREF_PROXY_SHARING = "pref_proxy_sharing_enabled"
+    const val PREF_ENABLE_LOCAL_PROXY = "pref_enable_local_proxy"
+    const val PREF_SOCKS_PORT = "pref_socks_port"
+    const val PREF_DYNAMIC_SOCKS_PORT = "pref_dynamic_socks_port"
+    const val PREF_SOCKS_USERNAME = "pref_socks_username"
+    const val PREF_SOCKS_PASSWORD = "pref_socks_password"
+    const val PREF_SOCKS_ENABLE_UDP = "pref_socks_enable_udp"
+    const val PREF_REMOTE_DNS = "pref_remote_dns"
+    const val PREF_DOMESTIC_DNS = "pref_domestic_dns"
+    const val PREF_DNS_HOSTS = "pref_dns_hosts"
+    const val PREF_DELAY_TEST_URL = "pref_delay_test_url"
+    const val PREF_PRIORITY_PROBE_INTERVALS = "pref_priority_probe_intervals"
+    const val PREF_PRIORITY_PROBE_SCREEN_ON_SECONDS = "pref_priority_probe_screen_on_seconds"
+    const val PREF_PRIORITY_PROBE_SCREEN_OFF_SECONDS = "pref_priority_probe_screen_off_seconds"
+    const val DEFAULT_PRIORITY_PROBE_SCREEN_ON_SECONDS = 15L
+    const val DEFAULT_PRIORITY_PROBE_SCREEN_OFF_SECONDS = 5 * 60L
+    const val PREF_IP_API_URL = "pref_ip_api_url"
+    const val PREF_LOGLEVEL = "pref_core_loglevel"
+    const val PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD = "pref_outbound_domain_resolve_method"
+    const val PREF_MODE = "pref_mode"
+    const val PREF_ROOT_MODE_ENABLE = "pref_root_mode_enabled"
+    const val PREF_ROOT_LAN_SHARING = "pref_root_lan_sharing"
+    const val PREF_IS_BOOTED = "pref_is_booted"
+    const val PREF_CHECK_UPDATE_PRE_RELEASE = "pref_check_update_pre_release"
+    const val PREF_GEO_FILES_SOURCES = "pref_geo_files_sources"
+    const val PREF_GEO_BOOTSTRAP_COMPLETE = "pref_zima_geo_bootstrap_complete_v5"
+    const val PREF_BUNDLED_GEO_REVISION = "pref_zima_bundled_geo_revision"
+    // Hev TUN is always forced on. The preference key remains for storage
+    // compatibility, but the toggle is hidden from Settings.
+    const val PREF_USE_HEV_TUNNEL = "pref_use_hev_tunnel_v3"
+    const val PREF_HEV_TUNNEL_LOGLEVEL = "pref_hev_tunnel_loglevel"
+    const val PREF_HEV_TUNNEL_RW_TIMEOUT = "pref_hev_tunnel_rw_timeout_v2"
+    const val PREF_RESET_SETTINGS = "pref_reset_settings"
+    const val PREF_AUTO_REMOVE_INVALID_AFTER_TEST = "pref_auto_remove_invalid_after_test"
+    const val PREF_AUTO_SORT_AFTER_TEST = "pref_auto_sort_after_test"
+    const val PREF_REAL_PING_CONCURRENCY = "pref_real_ping_concurrency"
+
+    /** Cache keys. */
+    const val CACHE_SUBSCRIPTION_ID = "cache_subscription_id"
+    /** Active subscription auto-switch session (shared UI ↔ VPN daemon process via MMKV). */
+
+    /** Protocol identifiers. */
+    const val PROTOCOL_FREEDOM = "freedom"
+
+    /** Broadcast actions. */
+    const val BROADCAST_ACTION_SERVICE = "$ANG_PACKAGE.action.service"
+    const val BROADCAST_ACTION_ACTIVITY = "$ANG_PACKAGE.action.activity"
+    const val BROADCAST_ACTION_WIDGET_CLICK = "$ANG_PACKAGE.action.widget.click"
+
+    /** Tasker extras. */
+    const val TASKER_EXTRA_BUNDLE = "com.twofortyfouram.locale.intent.extra.BUNDLE"
+    const val TASKER_EXTRA_STRING_BLURB = "com.twofortyfouram.locale.intent.extra.BLURB"
+    const val TASKER_EXTRA_BUNDLE_SWITCH = "tasker_extra_bundle_switch"
+    const val TASKER_EXTRA_BUNDLE_GUID = "tasker_extra_bundle_guid"
+    const val TASKER_DEFAULT_GUID = "Default"
+
+    /** Tags for different proxy modes. */
+    const val TAG_PROXY = "proxy"
+    const val TAG_DIRECT = "direct"
+    const val TAG_BLOCKED = "block"
+    const val TAG_FRAGMENT = "fragment"
+    const val TAG_DNS = "dns-module"
+    const val TAG_DOMESTIC_DNS = "domestic-dns"
+    const val TAG_BALANCER = "balancer-main"
+    const val TAG_BALANCER_PRE = "balancer"
+
+    /** Network-related constants. */
+    const val UPLINK = "uplink"
+    const val DOWNLINK = "downlink"
+
+    /** URLs for various resources. */
+    const val GITHUB_URL = "https://github.com"
+    const val GITHUB_RAW_URL = "https://raw.githubusercontent.com"
+    const val GITHUB_DOWNLOAD_URL = "$GITHUB_URL/%s/releases/latest/download"
+    const val ANDROID_PACKAGE_NAME_LIST_URL = "$GITHUB_RAW_URL/2dust/androidpackagenamelist/master/proxy.txt"
+    const val APP_URL = "$GITHUB_URL/VerentiX/WinterVPN"
+    const val APP_API_URL = "https://api.github.com/repos/VerentiX/WinterVPN/releases"
+
+    /** Хоттабыч / Lampa subscription gateways. */
+    const val SUBSCRIPTION_PRIMARY_HOST = "gw.zizmos.ru"
+    const val SUBSCRIPTION_FALLBACK_HOST = "sub.subhotig.buzz"
+    const val LAMPA_SITE_URL = "https://hattabych.ru"
+    const val LAMPA_TELEGRAM_BOT = "hattabych_vpn_bot"
+    const val LAMPA_TELEGRAM_URL = "https://t.me/$LAMPA_TELEGRAM_BOT"
+    const val LAMPA_SUBSCRIPTION_USER_AGENT = "Lampa-Mobile"
+    /** User-Agent for /auto/ subscription downloads (not billing API). */
+    const val SUBSCRIPTION_FETCH_USER_AGENT = "Lampa-Subscription"
+    const val APP_ISSUES_URL = "$APP_URL/issues"
+    const val APP_WIKI_MODE = "$APP_URL/wiki/Mode"
+    const val APP_PRIVACY_POLICY = "$GITHUB_RAW_URL/2dust/v2rayNG/master/CR.md"
+    const val APP_PROMOTION_URL = "aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw="
+    const val TG_CHANNEL_URL = "https://t.me/github_2dust"
+    /** Foreign connectivity probes (Cloudflare / Google) — used while VPN is on. */
+    const val DELAY_TEST_URL = "https://cp.cloudflare.com/generate_204"
+    const val DELAY_TEST_URL2 = "https://www.gstatic.com/generate_204"
+
+    /** Foreign IP/geo API — must work through the local HTTP proxy while VPN is on. */
+    const val IP_API_URL = "https://ipwho.is/"
+    val IP_API_URL_FALLBACKS = listOf(
+        "https://ifconfig.co/json",
+        "https://ipinfo.io/json"
+    )
+    const val IP_API_URL_LEGACY = "https://api.ip.sb/geoip"
+
+    /** DNS server addresses. */
+    const val DNS_PROXY = "https://cloudflare-dns.com/dns-query"
+    const val DNS_DIRECT = "223.5.5.5"
+    const val DNS_VPN = "1.1.1.1"
+    const val GEOSITE_PRIVATE = "geosite:private"
+    const val GEOSITE_CN = "geosite:cn"
+    const val GEOIP_PRIVATE = "geoip:private"
+    const val GEOIP_CN = "geoip:cn"
+
+    /** Geo data file names. */
+    const val GEOSITE_DAT = "geosite.dat"
+    const val GEOSITE_COMPAT_DAT = "geosite-compat.dat"
+    const val GEOIP_DAT = "geoip.dat"
+    const val GEOIP_COMPAT_DAT = "geoip-compat.dat"
+    const val GEOIP_ONLY_CN_PRIVATE_DAT = "geoip-only-cn-private.dat"
+    // Full V2Ray/Xray databases keep both standard V2Fly categories and common
+    // service categories (Telegram, Google, Cloudflare, etc.) available to
+    // imported subscriptions as well as bundled routing presets.
+    const val BUNDLED_GEO_REVISION = "runetfreedom-202607151651-87706f95-roscomvpn-202607150539-202604152235"
+    const val GEOIP_DAT_URL =
+        "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/87706f95f550f3f985da8c11ade3177be1f582f0/$GEOIP_DAT"
+    const val GEOSITE_DAT_URL =
+        "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/87706f95f550f3f985da8c11ade3177be1f582f0/$GEOSITE_DAT"
+    const val GEOSITE_COMPAT_DAT_URL =
+        "https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/2041bdc2748776fd083ea3bb8790eab14a7aed25/geosite.dat"
+    const val GEOIP_COMPAT_DAT_URL =
+        "https://raw.githubusercontent.com/hydraponique/roscomvpn-geoip/0c0cc60cfb07c17d0888df772000ffc8e8d76145/geoip.dat"
+    const val GEOIP_DAT_SHA256 = "b9f84648ec798e2c2ce4b2991a2891ed433689943aaefb098592177cf4ed789a"
+    const val GEOSITE_DAT_SHA256 = "a50be2b9c557e87faf9eb4d40371ffcdad7777565eeb4aa1078ae1e06e18bd25"
+    const val GEOSITE_COMPAT_DAT_SHA256 = "765b86e4b6aed5da1a206304b5500c7668687fa1df8e8322c8a4961e1b672190"
+    const val GEOIP_COMPAT_DAT_SHA256 = "10056efb313bc89245e7900716a35e6afbe087284b14a0680b9ece6bd24544cb"
+    const val GEOIP_ONLY_CN_PRIVATE_URL = "$GITHUB_RAW_URL/Loyalsoldier/geoip/release/$GEOIP_ONLY_CN_PRIVATE_DAT"
+
+    /** Moving release URLs used by the daily updater. Bundled pinned URLs remain the offline fallback. */
+    const val GEOIP_LATEST_URL =
+        "$GITHUB_RAW_URL/runetfreedom/russia-v2ray-rules-dat/release/$GEOIP_DAT"
+    const val GEOSITE_LATEST_URL =
+        "$GITHUB_RAW_URL/runetfreedom/russia-v2ray-rules-dat/release/$GEOSITE_DAT"
+    const val GEOIP_LATEST_SHA256_URL = "$GEOIP_LATEST_URL.sha256sum"
+    const val GEOSITE_LATEST_SHA256_URL = "$GEOSITE_LATEST_URL.sha256sum"
+    const val GEOSITE_COMPAT_LATEST_URL =
+        "$GITHUB_RAW_URL/hydraponique/roscomvpn-geosite/release/geosite.dat"
+    const val GEOIP_COMPAT_LATEST_URL =
+        "$GITHUB_RAW_URL/hydraponique/roscomvpn-geoip/release/geoip.dat"
+
+    /** Ports and addresses for various services. */
+    const val PORT_LOCAL_DNS = "10853"
+    const val PORT_SOCKS = "10808"
+    const val WIREGUARD_LOCAL_ADDRESS_V4 = "172.16.0.2/32"
+    const val WIREGUARD_LOCAL_ADDRESS_V6 = "2606:4700:110:8f81:d551:a0:532e:a2b3/128"
+    const val WIREGUARD_LOCAL_MTU = "1420"
+    const val LOOPBACK = "127.0.0.1"
+
+    /** Message constants for communication. */
+    const val MSG_REGISTER_CLIENT = 1
+    const val MSG_STATE_RUNNING = 11
+    const val MSG_STATE_NOT_RUNNING = 12
+    const val MSG_UNREGISTER_CLIENT = 2
+    const val MSG_STATE_START = 3
+    const val MSG_STATE_START_SUCCESS = 31
+    const val MSG_STATE_START_FAILURE = 32
+    const val MSG_STATE_STOP = 4
+    const val MSG_STATE_STOP_SUCCESS = 41
+    const val MSG_STATE_RESTART = 5
+    const val MSG_STATE_RELOAD = 51
+    const val MSG_MEASURE_DELAY = 6
+    const val MSG_MEASURE_DELAY_SUCCESS = 61
+    const val MSG_MEASURE_CONFIG_START = 7
+    const val MSG_MEASURE_CONFIG_CANCEL = 71
+    const val MSG_MEASURE_CONFIG_SUCCESS = 72
+    const val MSG_MEASURE_CONFIG_NOTIFY = 73
+    const val MSG_MEASURE_CONFIG_FINISH = 74
+    const val MSG_BATTERY_STATS_SETTING_CHANGED = 81
+
+    /** Notification channel IDs and names. */
+    const val RAY_NG_CHANNEL_ID = "ZIMAVPN_VPN_SERVICE_V4"
+
+    /** Protocols Scheme **/
+    const val VMESS = "vmess://"
+    const val CUSTOM = ""
+    const val SHADOWSOCKS = "ss://"
+    const val SOCKS = "socks://"
+    const val SOCKS4 = "socks4://"
+    const val SOCKS5 = "socks5://"
+    const val HTTP = "http://"
+    const val VLESS = "vless://"
+    const val TROJAN = "trojan://"
+    const val WIREGUARD = "wireguard://"
+    const val TUIC = "tuic://"
+    const val HYSTERIA = "hysteria://"
+    const val HYSTERIA2 = "hysteria2://"
+    const val HY2 = "hy2://"
+
+    /** Give a good name to this, IDK*/
+    const val VPN = "VPN"
+    const val VPN_MTU = 1280
+
+    /** Root (system-wide) mode runtime constants. */
+    const val ROOT_RUNTIME_DIR = "root"
+    const val ROOT_IPTABLES_CHAIN = "V2RAY_NG"
+    const val ROOT_FWMARK = 255            // defensive RETURN tag; hev's only upstream socket is loopback (already bypassed)
+    const val ROOT_MARK_ROUTE = 1          // packets we want pushed into the tun device
+    const val ROOT_ROUTE_TABLE = 2024
+    const val ROOT_RULE_PRIORITY = 1000
+    const val ROOT_TUN_NAME = "v2raytun0"
+    const val ROOT_TUN_ADDR_V4 = "198.18.0.1/15"
+    const val ROOT_TUN_ADDR_V6 = "fdfe:dcba:9876::1/64"
+
+    // hev-socks5-tunnel run as a standalone root binary (reuses the same project already
+    // bundled for the VPN hev path; distinct filename from the JNI lib to avoid collision).
+    const val ROOT_TUN2SOCKS_BIN = "libhevsockstun.so"
+    const val ROOT_FWD_CHAIN = "V2RAY_NG_FWD"   // FORWARD chain for LAN/tethering sharing
+    const val ROOT_DNS_CHAIN = "V2RAY_NG_DNS"   // nat chain for tethered-client DNS DNAT
+    const val ROOT_V6_CHAIN = "V2RAY_NG6"       // ip6tables filter/OUTPUT chain: blackhole native IPv6 when it isn't tunneled
+    const val ROOT_V6_FWD_CHAIN = "V2RAY_NG6_FWD" // ip6tables FORWARD chain: route or reject tethered clients' native IPv6
+    const val ROOT_V6_PRE_CHAIN = "V2RAY_NG6_PRE" // ip6tables mangle/PREROUTING chain: mark forwarded clients' IPv6 into the tun
+    const val ROOT_LAN_DNS = "1.1.1.1"          // fallback resolver for tethered clients when no plain-IPv4 DNS is configured
+    const val ROOT_OOM_SCORE = "-1000"          // oom_score_adj that makes the LMK never kill us
+
+    /** hev-sock5-tunnel read-write-timeout value */
+    const val HEVTUN_RW_TIMEOUT = "300,60"
+
+    // Google API rule constants
+    const val GOOGLEAPIS_CN_DOMAIN = "domain:googleapis.cn"
+    const val GOOGLEAPIS_COM_DOMAIN = "googleapis.com"
+
+    // Android Private DNS constants
+    const val DNS_ALIDNS_DOMAIN = "dns.alidns.com"
+    const val DNS_CISCO_SSE_DOMAIN = "dns.sse.cisco.com"
+    const val DNS_CISCO_UMBRELLA_DOMAIN = "dns.umbrella.com"
+    const val DNS_CLOUDFLARE_ONE_DOMAIN = "one.one.one.one"
+    const val DNS_CLOUDFLARE_ONEDOT_DNS_DOMAIN = "1dot1dot1dot1.cloudflare-dns.com"
+    const val DNS_CLOUDFLARE_DNS_COM_DOMAIN = "dns.cloudflare.com"
+    const val DNS_CLOUDFLARE_DNS_DOMAIN = "cloudflare-dns.com"
+    const val DNS_CLOUDFLARE_WARP_DOMAIN = "engage.cloudflareclient.com"
+    const val DNS_DNSPOD_DOH_DOMAIN = "doh.pub"
+    const val DNS_DNSPOD_DOT_DOMAIN = "dot.pub"
+    const val DNS_GOOGLE_DOMAIN = "dns.google"
+    const val DNS_QUAD9_DOMAIN = "dns.quad9.net"
+    const val DNS_SB_DOMAIN = "dns.sb"
+    const val DNS_YANDEX_DOMAIN = "common.dot.dns.yandex.net"
+
+    const val DEFAULT_PORT = 443
+    const val DEFAULT_SECURITY = "auto"
+    const val DEFAULT_LEVEL = 8
+    const val DEFAULT_NETWORK = "tcp"
+    const val TLS = "tls"
+    const val REALITY = "reality"
+    const val HEADER_TYPE_HTTP = "http"
+
+    const val UNIDENTIFIED_PACKAGE = "__unknown_app__"
+
+    val DNS_ALIDNS_ADDRESSES = arrayListOf("223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1")
+    val DNS_CISCO_SSE_ADDRESSES = arrayListOf("208.67.220.220", "208.67.222.222", "2620:119:35::35", "2620:119:53::53")
+    val DNS_CISCO_UMBRELLA_ADDRESSES = arrayListOf("208.67.220.220", "208.67.222.222", "2620:119:35::35", "2620:119:53::53")
+    val DNS_CLOUDFLARE_ONE_ADDRESSES = arrayListOf("1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001")
+    val DNS_CLOUDFLARE_ONEDOT_DNS_ADDRESSES = arrayListOf("1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001")
+    val DNS_CLOUDFLARE_DNS_COM_ADDRESSES = arrayListOf("162.159.61.8", "172.64.41.8", "2a06:98c1:52::8", "2803:f800:53::8")
+    val DNS_CLOUDFLARE_DNS_ADDRESSES = arrayListOf("104.16.248.249", "104.16.249.249", "2606:4700::6810:f8f9", "2606:4700::6810:f9f9")
+    val DNS_CLOUDFLARE_WARP_ADDRESSES = arrayListOf("162.159.192.1", "2606:4700:d0::a29f:c001")
+    val DNS_DNSPOD_DOH_ADDRESSES = arrayListOf("1.12.12.12", "120.53.53.53")
+    val DNS_DNSPOD_DOT_ADDRESSES = arrayListOf("1.12.12.12", "120.53.53.53")
+    val DNS_GOOGLE_ADDRESSES = arrayListOf("8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844")
+    val DNS_QUAD9_ADDRESSES = arrayListOf("9.9.9.9", "149.112.112.112", "2620:fe::fe", "2620:fe::9")
+    val DNS_SB_ADDRESSES = arrayListOf("45.11.45.11", "185.222.222.222", "2a09::", "2a11::")
+    val DNS_YANDEX_ADDRESSES = arrayListOf("77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff")
+
+    //minimum list https://serverfault.com/a/304791
+    val ROUTED_IP_LIST = arrayListOf(
+        "0.0.0.0/5",
+        "8.0.0.0/7",
+        "11.0.0.0/8",
+        "12.0.0.0/6",
+        "16.0.0.0/4",
+        "32.0.0.0/3",
+        "64.0.0.0/2",
+        "128.0.0.0/3",
+        "160.0.0.0/5",
+        "168.0.0.0/6",
+        "172.0.0.0/12",
+        "172.32.0.0/11",
+        "172.64.0.0/10",
+        "172.128.0.0/9",
+        "173.0.0.0/8",
+        "174.0.0.0/7",
+        "176.0.0.0/4",
+        "192.0.0.0/9",
+        "192.128.0.0/11",
+        "192.160.0.0/13",
+        "192.169.0.0/16",
+        "192.170.0.0/15",
+        "192.172.0.0/14",
+        "192.176.0.0/12",
+        "192.192.0.0/10",
+        "193.0.0.0/8",
+        "194.0.0.0/7",
+        "196.0.0.0/6",
+        "200.0.0.0/5",
+        "208.0.0.0/4",
+        "240.0.0.0/4"
+    )
+
+    val PRIVATE_IP_LIST = arrayListOf(
+        "0.0.0.0/8",
+        "10.0.0.0/8",
+        "127.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "224.0.0.0/4"
+    )
+
+    val GEO_FILES_SOURCES = arrayListOf(
+        "runetfreedom/russia-v2ray-rules-dat"
+    )
+
+    val BUILTIN_OUTBOUND_TAGS = setOf(
+        TAG_PROXY,
+        TAG_DIRECT,
+        TAG_BLOCKED,
+    )
+}

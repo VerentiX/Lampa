@@ -1,0 +1,657 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Single branding source: change this value to rename the app everywhere. -->
+    <string name="app_name" translatable="false">Lampa</string>
+    <string name="title_pref_priority_probe_intervals">Connection check intervals</string>
+    <string name="summary_pref_priority_probe_intervals_default">Screen on: 15 s; screen off: 300 s</string>
+    <string name="summary_pref_priority_probe_intervals_value">Screen on: %1$d s; screen off: %2$d s</string>
+    <string name="label_probe_interval_screen_on">Screen on (seconds, 2–86400)</string>
+    <string name="label_probe_interval_screen_off">Screen off (seconds, 10–86400)</string>
+    <string name="error_invalid_probe_intervals">Enter valid intervals within the indicated ranges</string>
+    <string name="title_add_subscription_clipboard">Import subscription link</string>
+    <string name="title_add_config_manual">Enter config manually</string>
+    <string name="hint_add_config_manual">Paste a subscription link, e.g. https://gw.zizmos.ru/auto/…</string>
+    <string name="menu_item_import_config_manual">Enter manually</string>
+    <string name="subscription_updated_at">Updated: %1$s · %2$d profiles</string>
+    <string name="subscription_never_updated">Not updated yet · %1$d profiles</string>
+    <string name="subscription_traffic">Used %1$s of %2$s</string>
+    <string name="subscription_time_left">%1$d d %2$d h left</string>
+    <string name="subscription_expired">Subscription expired</string>
+    <string name="subscription_traffic_compact">%1$s / %2$s</string>
+    <string name="subscription_traffic_unlimited">%1$s / ∞</string>
+    <string name="subscription_traffic_unknown">— / —</string>
+    <string name="subscription_expires_at">Until %1$s\n%2$d days left</string>
+    <string name="subscription_tariff_label">Plan: %1$s</string>
+    <string name="subscription_tariff_unknown">Standard</string>
+    <string name="subscription_days_left">%1$d days left</string>
+    <string name="subscription_packages_header">Packages</string>
+    <string name="subscription_package_now_badge">now</string>
+    <string name="subscription_package_active">%1$s — %2$d days left</string>
+    <string name="subscription_package_upcoming">%1$s — from %2$s · %3$d days</string>
+    <string name="subscription_until_total">Whole subscription — %1$d days left</string>
+    <string name="subscription_next_starts">Next package from %1$s</string>
+    <string name="split_tunnel_title">Split tunneling</string>
+    <string name="split_tunnel_mode_bypass">Apps that bypass VPN</string>
+    <string name="split_tunnel_mode_proxy">Apps that use VPN</string>
+    <string name="split_tunnel_hint_bypass">Checked apps go to the internet directly. Everything else uses the VPN.</string>
+    <string name="split_tunnel_hint_proxy">Checked apps use the VPN. Everything else goes directly.</string>
+    <string name="split_tunnel_summary_bypass">Bypass: %1$d apps</string>
+    <string name="split_tunnel_summary_proxy">Through VPN: %1$d apps</string>
+    <string name="split_tunnel_summary_all">All apps use the VPN</string>
+    <string name="subscription_renew">Renew</string>
+    <string name="subscription_manage">Manage</string>
+    <string name="subscription_active">Active</string>
+    <string name="subscription_import">Add subscription</string>
+    <string name="subscription_delete_confirm">Remove this subscription?</string>
+    <string name="subscription_select_first">Select a subscription first</string>
+    <string name="subscription_renew_choose_plan">Choose a plan</string>
+    <string name="subscription_renew_choose_plan_hint">The new package starts after the current one. Traffic resets with each package.</string>
+    <string name="subscription_current_label">Current plan</string>
+    <string name="subscription_plan_recommended">Popular</string>
+    <string name="subscription_plan_gb_unit">GB</string>
+    <string name="subscription_pay_choose">Payment method</string>
+    <string name="subscription_pay_sbp">SBP</string>
+    <string name="subscription_pay_sbp_hint">Pay via your bank in seconds</string>
+    <string name="subscription_pay_sbp_test">Test SBP</string>
+    <string name="subscription_pay_test_hint">No charge — admin only</string>
+    <string name="subscription_pay_usdt">USDT / Crypto</string>
+    <string name="subscription_pay_usdt_hint">Tether and other cryptocurrencies</string>
+    <string name="subscription_renew_unavailable">In-app payment is not available yet. Use Telegram bot.</string>
+    <string name="subscription_renew_success">Payment received. Subscription updated.</string>
+    <string name="subscription_payment_success_title">Payment successful!</string>
+    <string name="subscription_payment_success_message">Thank you for supporting Hattabych VPN.\nYour subscription is being updated — you can keep using it right away.</string>
+    <string name="subscription_payment_success_confirming">Confirming payment…</string>
+    <string name="subscription_payment_success_update_later">Payment succeeded, but the subscription could not be refreshed automatically. Please update it on the card.</string>
+    <string name="subscription_payment_success_done">Done</string>
+    <string name="subscription_payment_fail_return">Payment was not completed. You can try again.</string>
+    <string name="subscription_plan_meta">%1$d GB · %2$d days</string>
+    <string name="subscription_plan_price">%1$d ₽</string>
+    <string name="subscription_update_error_disabled">Subscription is disabled.</string>
+    <string name="subscription_update_error_invalid_url">Invalid subscription link.</string>
+    <string name="subscription_update_error_fetch">Could not reach the subscription server.</string>
+    <string name="subscription_update_error_empty">Could not download subscription from any server.</string>
+    <string name="subscription_update_attempts_header">Attempts:</string>
+    <string name="subscription_update_error_parse">Received a response but could not read server profiles.</string>
+    <string name="subscription_update_error_unknown">Subscription update failed.</string>
+    <string name="lampa_error_invalid_sub_id">Invalid subscription ID.</string>
+    <string name="lampa_error_subscription_not_found">Subscription not found on the server.</string>
+    <string name="lampa_error_invalid_plan">Invalid plan selected.</string>
+    <string name="lampa_error_invalid_method">Invalid payment method.</string>
+    <string name="lampa_error_payments_not_configured">Payments are temporarily unavailable.</string>
+    <string name="lampa_error_pay_url_missing">Could not create payment link.</string>
+    <string name="lampa_error_forbidden">Access denied for this subscription.</string>
+    <string name="lampa_error_order_not_found">Payment order not found.</string>
+    <string name="lampa_error_test_payment_forbidden">Test payment is not available for this subscription.</string>
+    <string name="lampa_error_network">Could not reach the payment server. Check your internet connection.</string>
+    <string name="lampa_error_generic">Error: %1$s</string>
+    <string name="subscription_auto_update_interval">Auto-update: %1$s</string>
+    <string name="subscription_auto_update_off">Auto-update off</string>
+    <string name="subscription_interval_hours">%1$d h</string>
+    <string name="subscription_interval_minutes">%1$d min</string>
+    <string name="subscription_empty_clipboard">Copy a subscription URL first</string>
+    <string name="subscription_already_exists">This subscription is already added</string>
+    <string name="geo_update_repairing">Geo database error detected. Updating files…</string>
+    <string name="geo_update_waiting">Waiting to update GeoIP/GeoSite…</string>
+    <string name="geo_update_downloading">Updating GeoIP/GeoSite: %1$d%%</string>
+    <string name="geo_update_success">GeoIP/GeoSite updated. Reconnecting…</string>
+    <string name="geo_update_ready">GeoIP/GeoSite files are ready.</string>
+    <string name="geo_update_failed">Could not update GeoIP/GeoSite. It will retry automatically.</string>
+    <string name="geo_update_checking">Checking routing database updates…</string>
+    <string name="geo_update_up_to_date">Routing databases are up to date.</string>
+    <string name="geo_update_notification_title">Routing database update</string>
+    <string name="geo_data_error">Could not load GeoIP/GeoSite routing databases. VPN did not start. Try again or reinstall the app.</string>
+    <string name="vpn_notification_channel_name">%1$s connection</string>
+    <string name="vpn_notification_title">%1$s · %2$s</string>
+    <string name="app_widget_name">Lampa</string>
+    <string name="app_tile_name">Lampa</string>
+    <string name="app_tile_first_use">Import your Хоттабыч subscription link to get started.</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="migration_success">Data migration success!</string>
+    <string name="action_stop_service">Stop service</string>
+    <string name="migration_fail">Data migration failed!</string>
+    <string name="pull_down_to_refresh">Please pull down to refresh!</string>
+
+    <!-- Notifications -->
+    <string name="notification_action_stop_v2ray">Stop</string>
+    <string name="toast_permission_denied">Unable to obtain the permission</string>
+    <string name="toast_permission_denied_notification">Unable to obtain the notification permission</string>
+    <string name="notification_action_more">Click for more</string>
+    <string name="toast_services_start">Start Services</string>
+    <string name="toast_services_stop">Stop Services</string>
+    <string name="toast_services_success">Start Services Success</string>
+    <string name="toast_services_failure">Start Services Failure</string>
+
+    <!--ServerActivity-->
+    <string name="title_server">Config</string>
+    <string name="zeus_status_connecting">Connecting…</string>
+    <string name="zeus_status_connected">Protected</string>
+    <string name="zeus_status_disconnected">Tap to connect</string>
+    <string name="zeus_profiles_title">Subscriptions</string>
+    <string name="zeus_choose_profile">Choose a subscription</string>
+    <string name="zeus_no_profile">No subscription selected</string>
+    <string name="connection_test_title">Connection check</string>
+    <string name="title_ui_animations">Lamp animation</string>
+    <string name="subscription_default_name">Хаттабыч VPN</string>
+    <string name="local_profiles_name">Local profiles</string>
+    <string name="subscription_profile_count">%1$d configurations — tap to expand</string>
+    <string name="subscription_profile_count_expanded">%1$d configurations — tap to collapse</string>
+    <string name="title_view_config">View configuration</string>
+    <string name="menu_item_add_config">Add config</string>
+    <string name="menu_item_save_config">Save config</string>
+    <string name="menu_item_edit_config">Edit config</string>
+    <string name="menu_item_del_config">Delete config</string>
+    <string name="menu_item_import_config_qrcode">Import from QRcode</string>
+    <string name="menu_item_import_config_clipboard">Import from Clipboard</string>
+    <string name="menu_item_import_config_local">Import from locally</string>
+    <string name="menu_item_import_config_policy_group">Add [Policy group]</string>
+    <string name="menu_item_import_config_proxy_chain">Add [Proxy chain]</string>
+    <string name="menu_item_import_config_manually_vmess">Add [VMess]</string>
+    <string name="menu_item_import_config_manually_vless">Add [VLESS]</string>
+    <string name="menu_item_import_config_manually_ss">Add [Shadowsocks]</string>
+    <string name="menu_item_import_config_manually_socks">Add [SOCKS]</string>
+    <string name="menu_item_import_config_manually_http">Add [HTTP]</string>
+    <string name="menu_item_import_config_manually_trojan">Add [Trojan]</string>
+    <string name="menu_item_import_config_manually_wireguard">Add [Wireguard]</string>
+    <string name="menu_item_import_config_manually_hysteria2">Add [Hysteria2]</string>
+    <string name="del_config_comfirm">Confirm delete ?</string>
+    <string name="del_invalid_config_comfirm">Please test before deleting! Confirm delete ?</string>
+    <string name="server_lab_remarks">remarks</string>
+    <string name="server_lab_address">address</string>
+    <string name="server_lab_port">port</string>
+    <string name="server_lab_id">id</string>
+    <string name="server_lab_alterid">alterId</string>
+    <string name="server_lab_security">security</string>
+    <string name="server_lab_network">Network</string>
+    <string name="server_lab_more_function">Transport</string>
+    <string name="server_lab_head_type">head type</string>
+    <string name="server_lab_mode_type">gRPC mode</string>
+    <string name="server_lab_request_host">host</string>
+    <string name="server_lab_request_host_http">http host</string>
+    <string name="server_lab_request_host_ws">ws host</string>
+    <string name="server_lab_request_host_httpupgrade">httpupgrade host</string>
+    <string name="server_lab_request_host_xhttp">xhttp host</string>
+    <string name="server_lab_request_host_h2">h2 host</string>
+    <string name="server_lab_request_host_quic">QUIC security</string>
+    <string name="server_lab_request_host_grpc">gRPC Authority</string>
+    <string name="server_lab_path">path</string>
+    <string name="server_lab_path_ws">ws path</string>
+    <string name="server_lab_path_httpupgrade">httpupgrade path</string>
+    <string name="server_lab_path_xhttp">xhttp path</string>
+    <string name="server_lab_path_h2">h2 path</string>
+    <string name="server_lab_path_quic">QUIC key</string>
+    <string name="server_lab_path_kcp">kcp seed</string>
+    <string name="server_lab_path_grpc">gRPC serviceName</string>
+    <string name="server_lab_stream_security">TLS</string>
+    <string name="server_lab_stream_fingerprint">Fingerprint</string>
+    <string name="server_lab_stream_alpn">Alpn</string>
+    <string name="server_lab_allow_insecure">allowInsecure</string>
+    <string name="server_lab_sni">SNI</string>
+    <string name="server_lab_address3">address</string>
+    <string name="server_lab_port3">port</string>
+    <string name="server_lab_id3">password</string>
+    <string name="server_lab_security3">security</string>
+    <string name="server_lab_id4">Password(Optional)</string>
+    <string name="server_lab_security4">User(Optional)</string>
+    <string name="server_lab_encryption">encryption</string>
+    <string name="server_lab_flow">flow</string>
+    <string name="server_lab_public_key">PublicKey</string>
+    <string name="server_lab_preshared_key">PreSharedKey(optional)</string>
+    <string name="server_lab_short_id">ShortId</string>
+    <string name="server_lab_spider_x">SpiderX</string>
+    <string name="server_lab_mldsa65_verify">Mldsa65Verify</string>
+    <string name="server_lab_secret_key">SecretKey</string>
+    <string name="server_lab_reserved">Reserved(Optional, separated by commas)</string>
+    <string name="server_lab_local_address">Local address (optional IPv4/IPv6, separated by commas)</string>
+    <string name="server_lab_local_mtu">Mtu(optional, default 1420)</string>
+    <string name="server_lab_kcp_mtu">mKCP MTU (Optional, core default 1350)</string>
+    <string name="server_lab_kcp_tti">mKCP TTI (Optional, core default 50)</string>
+    <string name="toast_success">Success</string>
+    <string name="toast_failure">Failure</string>
+    <string name="toast_none_data">There is nothing</string>
+    <string name="toast_incorrect_protocol">Incorrect protocol</string>
+    <string name="toast_decoding_failed">Decoding failed</string>
+    <string name="title_file_chooser">Select a config</string>
+    <string name="toast_require_file_manager">Please install a File Manager.</string>
+    <string name="server_customize_config">Customize config</string>
+    <string name="toast_config_file_invalid">Invalid config</string>
+    <string name="server_lab_content">Content</string>
+    <string name="toast_none_data_clipboard">There is no data in the clipboard</string>
+    <string name="toast_invalid_url">Invalid URL</string>
+    <string name="toast_insecure_url_protocol">Please do not use the insecure HTTP protocol subscription address</string>
+    <string name="server_lab_need_inbound">Ensure inbounds port is consistent with the settings</string>
+    <string name="toast_malformed_josn">Config malformed</string>
+    <string name="server_lab_request_host6">Host(SNI)(Optional)</string>
+    <string name="toast_action_not_allowed">Action not allowed</string>
+    <string name="server_obfs_password">Obfs password</string>
+    <string name="server_lab_port_hop">Port Hopping(will override the port)</string>
+    <string name="server_lab_port_hop_interval">Port Hopping Interval</string>
+    <string name="server_lab_bandwidth_down">Bandwidth down (Supported units: k/m/g/t)</string>
+    <string name="server_lab_bandwidth_up">Bandwidth up (Supported units: k/m/g/t)</string>
+    <string name="server_lab_xhttp_mode">XHTTP Mode</string>
+    <string name="server_lab_xhttp_extra">XHTTP Extra raw JSON, format: { XHTTPObject }</string>
+    <string name="server_lab_final_mask">finalMask raw JSON, format: { FinalMaskObject }</string>
+    <string name="server_lab_ech_config_list">EchConfigList</string>
+    <string name="server_lab_verify_peer_cert_by_name">Verify Peer Cert By Name</string>
+    <string name="server_lab_pinned_ca256">Certificate fingerprint (SHA-256)</string>
+    <string name="server_lab_browser_dialer">Enable Browser Dialer</string>
+    <string name="server_lab_browser_dialer_tip">Only supports xhttp (packet-up) and ws outbound; TLS-related settings may be ignored or conflict</string>
+    <string name="toast_allow_insecure_deprecated">WARNING: Skipping certificate verification "allowInsecure" will be disabled in August 2026. Please use certificate fingerprints as soon as possible. This feature will not be available after its expiration.</string>
+    <string name="pinned_ca256_action_fetch">Fetch and fill certificate fingerprint</string>
+    <string name="toast_fetch_cert_sha256_success">Certificate fingerprint fetched successfully</string>
+    <string name="toast_fetch_cert_sha256_failed">Failed to fetch certificate fingerprint</string>
+
+    <!-- UserAssetActivity -->
+    <string name="toast_asset_copy_failed">File copy failed, please use File Manager</string>
+    <string name="menu_item_add_asset">Add asset</string>
+    <string name="menu_item_add_file">Add files</string>
+    <string name="menu_item_add_url">Add URL</string>
+    <string name="menu_item_scan_qrcode">Scan QRcode</string>
+    <string name="title_url">URL</string>
+    <string name="menu_item_download_file">Download files</string>
+    <string name="title_user_asset_add_url">Add asset URL</string>
+    <string name="msg_file_not_found">File not found</string>
+    <string name="msg_remark_is_duplicate">The remarks already exists</string>
+    <string name="asset_geo_files_sources">Geo files source (optional)</string>
+
+    <!-- PerAppProxyActivity -->
+    <string name="msg_dialog_progress">Loading</string>
+    <string name="menu_item_search">Search</string>
+    <string name="menu_item_select_all">Select all</string>
+    <string name="menu_item_invert_selection">Invert selection</string>
+    <string name="msg_enter_keywords">Enter keywords</string>
+    <string name="switch_bypass_apps_mode">Bypass Mode</string>
+    <string name="menu_item_select_proxy_app">Auto select proxy app</string>
+    <string name="msg_downloading_content">Downloading content</string>
+    <string name="menu_item_export_proxy_app">Export to Clipboard</string>
+    <string name="menu_item_import_proxy_app">Import from Clipboard</string>
+    <string name="per_app_proxy_settings">Per-app settings</string>
+    <string name="per_app_proxy_settings_enable">Enable per-app</string>
+    <string name="app_picker_unknown_app">Unknown app (unidentified UID)</string>
+
+    <!-- Preferences -->
+    <string name="title_settings">Settings</string>
+    <string name="title_advanced">Advanced Settings</string>
+    <string name="title_core_settings">Core Settings</string>
+    <string name="title_vpn_settings">VPN Settings</string>
+    <string name="title_reset_settings">Reset</string>
+    <string name="title_pref_reset_settings">Reset settings to defaults</string>
+    <string name="summary_pref_reset_settings">Restore application settings to factory defaults. Subscriptions and profiles are kept.</string>
+    <string name="dialog_reset_settings_title">Reset settings?</string>
+    <string name="dialog_reset_settings_message">All application settings will be restored to defaults. Subscriptions and server profiles will not be deleted.</string>
+    <string name="toast_settings_reset">Settings restored to defaults</string>
+    <string name="title_pref_per_app_proxy">Per-app proxy</string>
+    <string name="summary_pref_per_app_proxy">General: Checked apps use proxy, unchecked apps connect directly; \nBypass mode: checked apps connect directly, unchecked apps use proxy. \nThe option to automatically select proxy applications is in the menu</string>
+    <string name="title_pref_is_booted">Auto connect at startup</string>
+    <string name="summary_pref_is_booted">Automatically connects to the selected server at startup, which may be unsuccessful</string>
+
+    <string name="title_pref_auto_remove_invalid_after_test">Auto delete invalid config after testing</string>
+    <string name="summary_pref_auto_remove_invalid_after_test">Test results may not be accurate; deleted config cannot be recovered.</string>
+    <string name="title_pref_auto_sort_after_test">Auto sort after testing</string>
+    <string name="summary_pref_auto_sort_after_test">Test results may not be accurate;</string>
+
+    <string name="title_mux_settings">Mux Settings</string>
+    <string name="title_pref_mux_enabled">Enable Mux</string>
+    <string name="summary_pref_mux_enabled">Faster, but it may cause unstable connectivity\nCustomize how to handle TCP, UDP and QUIC below</string>
+    <string name="title_pref_mux_concurency">TCP connections（range -1 to 1024）</string>
+    <string name="title_pref_mux_xudp_concurency">XUDP connections（range -1 to 1024）</string>
+    <string name="title_pref_mux_xudp_quic">Handling of QUIC in mux tunnel</string>
+    <string-array name="mux_xudp_quic_entries">
+        <item>reject</item>
+        <item>allow</item>
+        <item>skip</item>
+    </string-array>
+
+    <string name="title_pref_speed_enabled">Enable speed display</string>
+    <string name="summary_pref_speed_enabled">Display current speed in the notification.\nNotification icon would change based on
+        usage.</string>
+
+    <string name="title_pref_sniffing_enabled">Enable Sniffing</string>
+    <string name="summary_pref_sniffing_enabled">Try sniff domain from the packet (default on)</string>
+    <string name="title_pref_route_only_enabled">Enable routeOnly</string>
+    <string name="summary_pref_route_only_enabled">Use the sniffed domain name for routing only, and keep the target address as the IP address.</string>
+
+    <string name="title_pref_local_dns_enabled">Enable local DNS</string>
+    <string name="summary_pref_local_dns_enabled">DNS processed by core‘s DNS module (Recommended if you need routing bypassing LAN and mainland addresses)</string>
+
+    <string name="title_pref_fake_dns_enabled">Enable fake DNS</string>
+    <string name="summary_pref_fake_dns_enabled">Local DNS returns fake IP addresses (faster, but it may not work for some apps)</string>
+
+    <string name="title_pref_ipv6_enabled">Enable IPv6</string>
+    <string name="summary_pref_ipv6_enabled">Add IPv6 address and routes to the VPN interface</string>
+
+    <string name="title_pref_prefer_ipv6">Prefer IPv6</string>
+    <string name="summary_pref_prefer_ipv6">Prefer IPv6 addresses when resolving domain names</string>
+
+    <string name="title_pref_remote_dns">Remote DNS (udp/tcp/https/quic)(Optional)</string>
+    <string name="summary_pref_remote_dns">DNS</string>
+
+    <string name="title_pref_vpn_dns">VPN DNS (only IPv4/v6)</string>
+    <string name="title_pref_vpn_bypass_lan">Does VPN bypass LAN</string>
+
+    <string name="title_pref_vpn_interface_address">VPN Interface Address</string>
+
+    <string name="title_pref_vpn_mtu">VPN MTU (default 1500)</string>
+    <string name="title_pref_custom_mtu">Configure MTU</string>
+    <string name="summary_pref_custom_mtu">Off by default — uses the active Android link MTU unchanged. Enable to set a manual value or use adaptive MTU probing.</string>
+    <string name="title_pref_adaptive_mtu">Adaptive MTU</string>
+    <string name="summary_pref_adaptive_mtu">When enabled, uses the probed path MTU for the current Wi‑Fi or mobile link without an extra subtraction (or Android link MTU until you probe). Reconnect VPN after changing this setting.</string>
+    <string name="title_pref_probe_mtu_wifi">Pick MTU for Wi‑Fi</string>
+    <string name="title_pref_probe_mtu_cellular">Pick MTU for LTE</string>
+    <string name="summary_pref_probe_mtu_unset">Not set — will use Android link MTU</string>
+    <string name="summary_pref_probe_mtu_value">Saved: %1$d (tap to re-probe)</string>
+    <string name="summary_pref_probe_mtu_wrong_transport">Connect to this network to probe</string>
+    <string name="summary_pref_probe_mtu_running">Probing path MTU (DF)…</string>
+    <string name="toast_probe_mtu_success">Path MTU saved: %1$d</string>
+    <string name="toast_probe_mtu_failed">Could not probe path MTU</string>
+    <string name="title_pref_notification_show_mtu">Show MTU in notification</string>
+    <string name="summary_pref_notification_show_mtu">Show the current effective VPN MTU while connected.</string>
+    <string name="title_pref_notification_show_active_outbound">Show active route in notification</string>
+    <string name="summary_pref_notification_show_active_outbound">Shows the Smart Priority route currently selected for proxy traffic.</string>
+    <string name="title_pref_notification_show_routing_mode">Show routing mode in notification</string>
+    <string name="summary_pref_notification_show_routing_mode">Debug: show whether Smart Priority uses default (p0–p4) or whitelist (p5+) routing.</string>
+    <string name="notification_routing_mode">Routing: %1$s</string>
+    <string name="notification_routing_mode_default">default</string>
+    <string name="notification_routing_mode_whitelist">whitelist</string>
+    <string name="title_pref_notification_show_battery_usage">Show Хоттабыч battery usage</string>
+    <string name="summary_pref_notification_show_battery_usage">Optional Android UID energy estimate since VPN start. No battery statistics are collected while disabled.</string>
+    <string name="notification_battery_usage">Хоттабыч: ≈%1$.3f%% · ≈%2$.2f mAh · %3$.3f%%/h</string>
+    <string name="notification_battery_usage_mah">Хоттабыч: ≈%1$.1f mAh</string>
+    <string name="notification_battery_usage_waiting">Хоттабыч: collecting battery statistics…</string>
+    <string name="notification_battery_usage_unavailable">Хоттабыч: battery statistics unavailable</string>
+
+
+    <string name="title_pref_domestic_dns">Domestic DNS (Optional)</string>
+    <string name="summary_pref_domestic_dns">DNS</string>
+
+    <string name="title_pref_dns_hosts">DNS hosts (Format: domain:address,…)</string>
+    <string name="summary_pref_dns_hosts">domain:address,…</string>
+
+    <string name="title_pref_delay_test_url">True delay test url </string>
+    <string name="summary_pref_delay_test_url">Url</string>
+    <string name="title_pref_real_ping_concurrency">True delay test concurrency</string>
+
+    <string name="title_pref_ip_api_url">Current connection info test url</string>
+    <string name="summary_pref_ip_api_url">Url</string>
+
+    <string name="title_pref_proxy_sharing_enabled">Allow connections from the LAN</string>
+    <string name="summary_pref_proxy_sharing_enabled">Other devices can connect to proxy by your IP address through local proxy. Only enable in trusted networks to avoid unauthorized connections</string>
+    <string name="toast_warning_pref_proxysharing_short">Allow connections from the LAN. Make sure you are in a trusted network</string>
+
+    <string name="title_pref_socks_port">Local proxy port</string>
+    <string name="title_pref_enable_local_proxy">Enable local proxy</string>
+    <string name="summary_pref_enable_local_proxy">When disabled, no SOCKS proxy is available, so subscription updates and similar actions cannot use the proxy</string>
+    <string name="title_pref_socks_enable_udp">SOCKS5 UDP</string>
+    <string name="summary_pref_socks_enable_udp">SOCKS5 authentication is not fully secure when using UDP.</string>
+    <string name="summary_pref_socks_port">Local proxy port</string>
+    <string name="title_pref_dynamic_socks_port">Enable dynamic local proxy port</string>
+    <string name="summary_pref_dynamic_socks_port">Generate a random local proxy port each time the inbound is created</string>
+    <string name="title_pref_socks_username">Local proxy username (optional)</string>
+    <string name="summary_pref_socks_username">Username</string>
+    <string name="title_pref_socks_password">Local proxy password (optional)</string>
+    <string name="summary_pref_socks_password">Password</string>
+
+    <string name="title_pref_local_dns_port">Local DNS port</string>
+    <string name="summary_pref_local_dns_port">Local DNS port</string>
+
+    <string name="title_pref_confirm_remove">Delete config confirmation</string>
+    <string name="summary_pref_confirm_remove">Whether deleting a config requires a second confirmation by the user</string>
+
+    <string name="title_pref_start_scan_immediate">Start scanning immediately</string>
+    <string name="summary_pref_start_scan_immediate">Open the camera to scan immediately at startup, otherwise you can choose to scan the code or select a photo in the toolbar</string>
+
+    <string name="title_pref_append_http_proxy">Append HTTP Proxy to VPN</string>
+    <string name="summary_pref_append_http_proxy">HTTP proxy will be used directly from (browser/ some supported apps), without going through the virtual NIC device (Android 10+)</string>
+
+    <string name="title_pref_double_column_display">Enable double column display</string>
+    <string name="summary_pref_double_column_display">The profile list is displayed in double columns, allowing more content to be displayed on the screen. You need to restart the application to take effect.</string>
+
+    <string name="title_pref_group_all_display">Enable show all groups</string>
+    <string name="summary_pref_group_all_display">Add an extra "All Tabs" page</string>
+
+    <!-- AboutActivity -->
+    <string name="title_pref_feedback">Feedback</string>
+    <string name="summary_pref_feedback">Feedback enhancements or bugs to GitHub</string>
+    <string name="summary_pref_tg_group">Join Telegram Group</string>
+    <string name="toast_tg_app_not_found">Telegram app not found</string>
+    <string name="title_privacy_policy">Privacy policy</string>
+    <string name="title_qr_code">QR code</string>
+    <string name="title_about">About</string>
+    <string name="title_source_code">Source code</string>
+    <string name="title_oss_license">Open Source licenses</string>
+    <string name="title_tg_channel">Telegram channel</string>
+
+    <string name="title_pref_promotion">Promotion</string>
+
+    <string name="title_pref_auto_update_subscription">Automatic update subscriptions</string>
+    <string name="summary_pref_auto_update_subscription">Update your subscriptions automatically at set intervals in the background. Depending on the device, this feature may not always work</string>
+    <string name="title_pref_auto_update_interval">Auto Update Interval (Minutes, Min value 15)</string>
+
+    <string name="title_core_loglevel">Log Level</string>
+    <string name="title_pref_failure_log_enabled">Record failure logs</string>
+    <string name="summary_pref_failure_log_enabled">Off by default. Saves VPN crash/failure breadcrumbs and nearby events only — no continuous logging.</string>
+    <string name="title_pref_failure_log_view">Failure logs</string>
+    <string name="summary_pref_failure_log_view">View, share, or clear saved crash reports.</string>
+    <string name="title_outbound_domain_resolve_method">Outbound domain pre-resolve method</string>
+    <string name="title_mode">Mode</string>
+    <string name="title_mode_help">Click me for more help</string>
+    <string name="title_language">Language</string>
+    <string name="title_ui_settings">UI settings</string>
+    <string name="title_pref_ui_mode_night">UI mode settings</string>
+    <string name="title_pref_use_hev_tunnel">Enable Hev TUN Feature</string>
+    <string name="summary_pref_use_hev_tunnel">When enabled, TUN will use hev-socks5-tunnel; otherwise, it will use xray-core.</string>
+    <string name="title_pref_hev_tunnel_loglevel">Hev Tun Log Level</string>
+    <string name="title_pref_hev_tunnel_rw_timeout">Hev Tun read/write timeout (seconds) (tcp,udp default 300,60)</string>
+    <string name="title_mode_settings">Mode Settings</string>
+    <string name="title_root_mode_enabled">Root mode enabled (Root Users)</string>
+    <string name="summary_root_mode_enabled">Enable low-level transparent proxying via root privileges. This mode bypasses the standard Android system VPN to directly take over all underlying network traffic. Once enabled, the original regular mode, per-app routing, and related VPN settings will become completely invalid.</string>
+    <string name="toast_root_required">Root access is required for this feature</string>
+    <string name="title_root_lan_sharing">LAN / tethering sharing (Root Users)</string>
+    <string name="summary_root_lan_sharing">Route Wi-Fi hotspot and USB-tethered devices through the VPN</string>
+
+    <string name="title_logcat">Logcat</string>
+    <string name="logcat_copy">Copy</string>
+    <string name="logcat_clear">Clear</string>
+    <string name="logcat_share">Share log</string>
+    <string name="title_service_restart">Service restart</string>
+    <string name="title_del_all_config">Delete config</string>
+    <string name="title_del_duplicate_config">Delete duplicate config</string>
+    <string name="title_del_invalid_config">Delete invalid config</string>
+    <string name="title_export_all">Export configs to clipboard</string>
+    <string name="title_sub_setting">Subscription group setting</string>
+    <string name="sub_setting_remarks">remarks</string>
+    <string name="sub_setting_url">Optional URL</string>
+    <string name="sub_setting_user_agent">User Agent</string>
+    <string name="sub_setting_filter">Remarks regular filter</string>
+    <string name="sub_setting_enable">Enable update</string>
+    <string name="sub_auto_update">Enable automatic update</string>
+    <string name="sub_auto_switch">Enable automatic server switching</string>
+    <string name="sub_auto_switch_summary">Pick the fastest working server and fail over automatically</string>
+    <string name="sub_allow_insecure_url">Allow insecure HTTP address</string>
+    <string name="title_measure_subscription_delay">Measure subscription delay</string>
+    <string name="title_auto_switch_connect">Connect with auto-select</string>
+    <string name="subscription_show_more">Show more (%d left)</string>
+    <string name="subscription_auto_switch_selecting">Selecting the best server…</string>
+    <string name="subscription_auto_switch_no_server">No working servers found in this subscription</string>
+    <string name="subscription_auto_switch_started">Connected via auto-select: %s</string>
+    <string name="subscription_auto_switch_failover">Switched to backup: %s</string>
+    <string name="sub_setting_pre_profile">Previous proxy config remarks</string>
+    <string name="sub_setting_next_profile">Next proxy config remarks</string>
+    <string name="sub_setting_pre_profile_tip">The config remarks exist and are unique</string>
+    <string name="toast_invalid_update_interval">Invalid update interval. Minimum is 15 minutes.</string>
+    <string name="title_sub_update">Update subscription</string>
+    <string name="title_real_ping_all_server">Real delay config</string>
+    <string name="title_user_asset_setting">Asset files</string>
+    <string name="title_sort_by_test_results">Sorting by test results</string>
+    <string name="title_filter_config">Filter config</string>
+    <string name="filter_config_all">All</string>
+    <string name="title_del_duplicate_config_count">Delete %d duplicate configs</string>
+    <string name="title_del_config_count">Delete %d configs</string>
+    <string name="title_import_config_count">Import %d configs</string>
+    <string name="title_export_config_count">Export %d configs</string>
+    <string name="title_update_config_count">Update %d configs</string>
+    <string name="title_update_subscription_result">Updated %1$d configs (%2$d success, %3$d failed, %4$d skipped)</string>
+    <string name="title_update_subscription_no_subscription">No subscriptions</string>
+    <string name="toast_server_not_found_in_group">Selected server not found in current group</string>
+    <string name="toast_fragment_not_available">Unable to locate current view</string>
+    <string name="title_locate_selected_config">Locate the selected config</string>
+
+    <string name="tasker_start_service">Start Service</string>
+    <string name="tasker_setting_confirm">Confirm</string>
+
+    <!-- RoutingSettingActivity -->
+    <string name="routing_settings_domain_strategy">Domain strategy</string>
+    <string name="routing_settings_title">Routing Settings</string>
+    <string name="routing_settings_tips">Separated by commas(,), \nchoose domain or ip or process</string>
+    <string name="routing_settings_save">Save</string>
+    <string name="routing_settings_delete">Clear</string>
+    <string name="routing_settings_rule_title">Routing Rule Settings</string>
+    <string name="routing_settings_add_rule">Add rule</string>
+    <string name="routing_settings_import_predefined_rulesets">Import predefined rulesets</string>
+    <string name="routing_settings_import_rulesets_tip">Existing rulesets will be deleted, are you sure to continue?</string>
+    <string name="routing_settings_import_rulesets_from_clipboard">Import ruleset from clipboard</string>
+    <string name="routing_settings_import_rulesets_from_qrcode">Import ruleset from QRcode</string>
+    <string name="routing_settings_export_rulesets_to_clipboard">Export ruleset to clipboard</string>
+    <string name="routing_settings_locked">Locked, keep this rule when import presets</string>
+    <string name="routing_settings_domain">domain</string>
+    <string name="routing_settings_ip">ip</string>
+    <string name="routing_settings_process">process (Package Name — only supported when using Xray TUN, routeOnly enabled, and Android 10+)</string>
+    <string name="routing_settings_port">port</string>
+    <string name="routing_settings_protocol">protocol</string>
+    <string name="routing_settings_protocol_tip">[http,tls,bittorrent]</string>
+    <string name="routing_settings_network">network</string>
+    <string name="routing_settings_network_tip">[udp|tcp]</string>
+    <string name="routing_settings_outbound_tag_hint" translatable="false">proxy / direct / block / &lt;remarks&gt;</string>
+    <string name="routing_settings_outbound_tag">outboundTag</string>
+
+    <string name="connection_test_pending">Tap to check connection</string>
+    <string name="connection_test_testing">Checking connection…</string>
+    <string name="connection_test_testing_count">Testing %d configs…</string>
+    <string name="connection_test_available">Success: Connection took %dms</string>
+    <string name="connection_test_error">Fail to detect internet connection: %s</string>
+    <string name="connection_test_fail">Internet Unavailable</string>
+    <string name="connection_test_error_status_code">Error code: #%d</string>
+    <string name="connection_connected">Connected — tap to check</string>
+    <string name="connection_not_connected">Connect first to check connection</string>
+    <string name="connection_runing_task_left">Number of running test tasks: %s</string>
+
+    <string name="import_subscription_success">Subscription imported Successfully</string>
+    <string name="import_subscription_failure">Import subscription failed</string>
+    <string name="title_fragment_settings">Fragment Settings</string>
+    <string name="title_pref_fragment_packets">Fragment Packets</string>
+    <string name="title_pref_fragment_length">Fragment Length (min-max)</string>
+    <string name="title_pref_fragment_interval">Fragment Interval (min-max)</string>
+    <string name="title_pref_fragment_enabled">Enable Fragment</string>
+    <string name="title_pref_fragment_maxsplit">Fragment Max Split</string>
+
+    <string name="update_check_for_update">Check for update</string>
+    <string name="update_already_latest_version">Already on the latest version</string>
+    <string name="update_new_version_found">New version found: %s</string>
+    <string name="update_now">Update now</string>
+    <string name="update_check_pre_release">Check Pre-release</string>
+    <string name="update_checking_for_update">Checking for update…</string>
+    <string name="update_download_started">Update download started. Android will offer installation when it is ready.</string>
+    <string name="update_install_permission">Allow this app to install updates, then tap Update again.</string>
+    <string name="update_download_complete">Version %1$s is downloaded. Tap to install it.</string>
+    <string name="update_download_preparing">Preparing update download…</string>
+    <string name="update_download_progress">Downloading update: %1$d%% · %2$s / %3$s</string>
+    <string name="update_download_progress_unknown">Downloading update: %1$s</string>
+    <string name="update_download_paused">Update download is paused…</string>
+    <string name="update_download_failed">Could not download the update (error %1$d).</string>
+    <string name="update_download_installing">Download complete. Opening Android installer…</string>
+    <string name="update_install_launch_failed">Could not open the Android installer.</string>
+    <string name="update_available_notification">A new version %1$s is available. Tap to view the update.</string>
+    <string name="update_ready_to_install">Version %1$s is downloaded and ready to install.</string>
+    <string name="update_later">Later</string>
+
+    <string name="title_policy_group_type">Policy group type</string>
+    <string name="title_policy_group_subscription_id">From subscription group</string>
+    <string name="title_policy_group_subscription_filter">Remarks regular filter</string>
+
+    <string name="server_proxy_chain_members">Proxy chain members</string>
+    <string name="server_proxy_chain_pick_members">Tap here to pick member</string>
+    <string name="server_proxy_chain_member_unselected">Select a member</string>
+    <string name="server_proxy_chain_members_unselected">Please select member for each chain row</string>
+    <string name="server_proxy_chain_members_insufficient">Insufficient members</string>
+    <string name="server_proxy_chain_members_invalid">Invalid chain members: %1$s</string>
+
+    <!-- BackupActivity -->
+    <string name="title_configuration_backup_restore">Backup &amp; Restore</string>
+    <string name="title_configuration_backup">Backup config</string>
+    <string name="title_configuration_restore">Restore config</string>
+    <string name="title_configuration_share">Share config</string>
+    <string name="title_webdav_config_setting">WebDAV Settings</string>
+    <string name="title_webdav_config_setting_unknown">Please configure WebDAV first.</string>
+    <string name="title_webdav_url">WebDAV server URL</string>
+    <string name="title_webdav_user">Username</string>
+    <string name="title_webdav_pass">Password</string>
+    <string name="title_webdav_remote_path">Remote directory (optional)</string>
+
+    <string-array name="share_method">
+        <item>QRcode</item>
+        <item>Export to clipboard</item>
+        <item>Export full config to clipboard</item>
+    </string-array>
+
+    <string-array name="share_method_more">
+        <item>QRcode</item>
+        <item>Export to clipboard</item>
+        <item>Export full config to clipboard</item>
+        <item>Edit</item>
+        <item>Delete</item>
+    </string-array>
+
+    <string-array name="share_sub_method">
+        <item>QRcode</item>
+        <item>Export to clipboard</item>
+    </string-array>
+
+    <string-array name="mode_entries">
+        <item>VPN</item>
+        <item>Proxy only</item>
+    </string-array>
+
+    <string-array name="browser_dialer_mode">
+        <item>Disable</item>
+        <item>OkHttp</item>
+    </string-array>
+
+    <string-array name="ui_mode_night">
+        <item>Follow system</item>
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+
+    <string-array name="preset_rulesets">
+        <item>China Whitelist</item>
+        <item>China Blacklist</item>
+        <item>Global</item>
+        <item>Iran Whitelist</item>
+        <item>Russia Whitelist</item>
+    </string-array>
+
+    <string-array name="vpn_bypass_lan">
+        <item>Follow config</item>
+        <item>Bypass</item>
+        <item>Not Bypass</item>
+    </string-array>
+
+    <string-array name="outbound_domain_resolve_method">
+        <item>Do not resolve</item>
+        <item>Resolve and add to DNS Hosts</item>
+        <item>Resolve and replace domain</item>
+    </string-array>
+
+    <string-array name="policy_group_type">
+        <item>Least Ping</item>
+        <item>Least Load</item>
+        <item>Random</item>
+        <item>Round Robin</item>
+    </string-array>
+
+    <string-array name="config_backup_options">
+        <item>Local</item>
+        <item>WebDAV</item>
+    </string-array>
+
+</resources>

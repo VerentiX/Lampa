@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+.kotlin/
+**/build/
+local.properties
+*.jks
+*.keystore
+*.apk
+*.aab
+remote-release/
+

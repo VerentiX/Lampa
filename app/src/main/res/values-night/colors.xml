@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="color_fab_active">#4CD7AF</color>
+    <color name="color_fab_inactive">#90A2FF</color>
+    <color name="divider_color_light">#3F414E</color>
+    <color name="zeus_card_stroke">#4D5C9A</color>
+    <color name="zeus_inner_card">#241F293F</color>
+    <color name="zeus_status_background">#22FFFFFF</color>
+    <color name="zeus_button_ripple">#55FFFFFF</color>
+
+    <color name="md_theme_primary">#BAC3FF</color>
+    <color name="md_theme_onPrimary">#092477</color>
+    <color name="md_theme_primaryContainer">#18368F</color>
+    <color name="md_theme_onPrimaryContainer">#DEE3FF</color>
+
+    <!-- Secondary colors - accent color: orange -->
+    <color name="md_theme_secondary">#F7BD58</color>
+    <color name="md_theme_onSecondary">#442B00</color>
+    <color name="md_theme_secondaryContainer">#624000</color>
+    <color name="md_theme_onSecondaryContainer">#FFDEA6</color>
+
+    <!-- Tertiary colors - tertiary color: green -->
+    <color name="md_theme_tertiary">#66DDB8</color>
+    <color name="md_theme_onTertiary">#00382E</color>
+    <color name="md_theme_tertiaryContainer">#005143</color>
+    <color name="md_theme_onTertiaryContainer">#A0F2D0</color>
+
+    <!-- Error colors -->
+    <color name="md_theme_error">#FFB4AB</color>
+    <color name="md_theme_errorContainer">#93000A</color>
+    <color name="md_theme_onError">#690005</color>
+    <color name="md_theme_onErrorContainer">#FFDAD6</color>
+
+    <!-- Background colors -->
+    <color name="md_theme_background">#11131B</color>
+    <color name="md_theme_onBackground">#E3E1EC</color>
+
+    <!-- Surface colors -->
+    <color name="md_theme_surface">#11131B</color>
+    <color name="md_theme_onSurface">#E3E1EC</color>
+    <color name="md_theme_surfaceVariant">#454650</color>
+    <color name="md_theme_onSurfaceVariant">#C6C6D0</color>
+    <color name="md_theme_inverseSurface">#E6E1E5</color>
+    <color name="md_theme_inverseOnSurface">#1C1B1F</color>
+
+    <!-- Outline colors -->
+    <color name="md_theme_outline">#938F99</color>
+    <color name="md_theme_outlineVariant">#49454F</color>
+
+    <!-- Other colors -->
+    <color name="md_theme_inversePrimary">#2948C7</color>
+    <color name="md_theme_shadow">#000000</color>
+    <color name="md_theme_surfaceTint">#BAC3FF</color>
+    <color name="md_theme_scrim">#000000</color>
+</resources>

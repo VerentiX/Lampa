@@ -1,0 +1,116 @@
+package com.v2ray.ang.service
+
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.IBinder
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.contracts.ServiceControl
+import com.v2ray.ang.core.CoreServiceManager
+import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.util.LogUtil
+import com.v2ray.ang.util.MyContextWrapper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+class CoreProxyOnlyService : Service(), ServiceControl {
+    /**
+     * Initializes the service.
+     */
+    override fun onCreate() {
+        super.onCreate()
+        LogUtil.i(AppConfig.TAG, "StartCore-Proxy: Service created")
+        CoreServiceManager.bindServiceControl(this)
+    }
+
+    /**
+     * Handles the start command for the service.
+     * @param intent The intent.
+     * @param flags The flags.
+     * @param startId The start ID.
+     * @return The start mode.
+     */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        LogUtil.i(AppConfig.TAG, "StartCore-Proxy: Service command received")
+        CoreServiceManager.startCoreLoop(null)
+        return START_STICKY
+    }
+
+    /**
+     * Destroys the service.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        CoreServiceManager.unbindServiceControl(this)
+        CoreServiceManager.stopCoreLoop()
+    }
+
+    /**
+     * Gets the service instance.
+     * @return The service instance.
+     */
+    override fun getService(): Service {
+        return this
+    }
+
+    override fun isServiceActive(): Boolean = CoreServiceManager.isRunning()
+
+    /**
+     * Starts the service.
+     */
+    override fun startService() {
+        // do nothing
+    }
+
+    /**
+     * Stops the service.
+     */
+    override fun stopService() {
+        stopSelf()
+    }
+
+    override fun reloadService(force: Boolean): Boolean {
+        val job = CoroutineScope(Dispatchers.IO).launch {
+            CoreServiceManager.reloadCoreLoop(null)
+        }
+        return !job.isCancelled
+    }
+
+    override fun recoverStalledReload(): Boolean {
+        return reloadService(force = true)
+    }
+
+    /**
+     * Protects the VPN socket.
+     * @param socket The socket to protect.
+     * @return True if the socket is protected, false otherwise.
+     */
+    override fun vpnProtect(socket: Int): Boolean {
+        return true
+    }
+
+    override fun requestTunRecreate() {
+        // Proxy-only mode has no Android VpnService TUN MTU to recreate.
+    }
+
+    /**
+     * Binds the service.
+     * @param intent The intent.
+     * @return The binder.
+     */
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
+    /**
+     * Attaches the base context to the service.
+     * @param newBase The new base context.
+     */
+    override fun attachBaseContext(newBase: Context?) {
+        val context = newBase?.let {
+            MyContextWrapper.wrap(newBase, SettingsManager.getLocale())
+        }
+        super.attachBaseContext(context)
+    }
+}

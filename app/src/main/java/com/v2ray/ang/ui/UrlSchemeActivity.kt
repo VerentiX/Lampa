@@ -1,0 +1,121 @@
+package com.v2ray.ang.ui
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.R
+import com.v2ray.ang.databinding.ActivityLogcatBinding
+import com.v2ray.ang.extension.toast
+import com.v2ray.ang.extension.toastError
+import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.util.LogUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URLDecoder
+
+class UrlSchemeActivity : BaseActivity() {
+    private val binding by lazy { ActivityLogcatBinding.inflate(layoutInflater) }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(binding.root)
+
+        try {
+            var handledPayment = false
+            intent.apply {
+                if (action == Intent.ACTION_SEND) {
+                    if ("text/plain" == type) {
+                        intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+                            parseUri(it, null)
+                        }
+                    }
+                } else if (action == Intent.ACTION_VIEW) {
+                    when (data?.host) {
+                        "install-config" -> {
+                            val uri: Uri? = intent.data
+                            val shareUrl = uri?.getQueryParameter("url").orEmpty()
+                            parseUri(shareUrl, uri?.fragment)
+                        }
+
+                        "install-sub" -> {
+                            val uri: Uri? = intent.data
+                            val shareUrl = uri?.getQueryParameter("url").orEmpty()
+                            parseUri(shareUrl, uri?.fragment)
+                        }
+
+                        "payment-success" -> {
+                            startActivity(
+                                Intent(this@UrlSchemeActivity, MainActivity::class.java).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                    putExtra(MainActivity.EXTRA_PAYMENT_SUCCESS, true)
+                                    val subId = data?.getQueryParameter("subId").orEmpty()
+                                    if (subId.isNotBlank()) {
+                                        putExtra(MainActivity.EXTRA_PAYMENT_SUB_ID, subId)
+                                    }
+                                },
+                            )
+                            handledPayment = true
+                        }
+
+                        "payment-fail" -> {
+                            val subId = intent.data?.getQueryParameter("subId").orEmpty()
+                            if (subId.isNotBlank()) {
+                                startActivity(
+                                    Intent(this@UrlSchemeActivity, RenewSubscriptionActivity::class.java)
+                                        .putExtra(RenewSubscriptionActivity.EXTRA_SUB_ID, subId),
+                                )
+                                toast(R.string.subscription_payment_fail_return)
+                                handledPayment = true
+                            } else {
+                                toastError(R.string.toast_failure)
+                            }
+                        }
+
+                        else -> {
+                            toastError(R.string.toast_failure)
+                        }
+                    }
+                }
+            }
+
+            if (!handledPayment) {
+                startActivity(Intent(this, MainActivity::class.java))
+            }
+            finish()
+        } catch (e: Exception) {
+            LogUtil.e(AppConfig.TAG, "Error processing URL scheme", e)
+        }
+    }
+
+    private fun parseUri(uriString: String?, fragment: String?) {
+        if (uriString.isNullOrEmpty()) {
+            return
+        }
+        LogUtil.i(AppConfig.TAG, uriString)
+
+        var decodedUrl = URLDecoder.decode(uriString, "UTF-8")
+        val uri = Uri.parse(decodedUrl)
+        if (uri != null) {
+            if (uri.fragment.isNullOrEmpty() && !fragment.isNullOrEmpty()) {
+                decodedUrl += "#${fragment}"
+            }
+            LogUtil.i(AppConfig.TAG, decodedUrl)
+            lifecycleScope.launch(Dispatchers.IO) {
+                val (count, countSub) = AngConfigManager.importBatchConfig(decodedUrl, "", false)
+                withContext(Dispatchers.Main) {
+                    if (count + countSub > 0) {
+                        toast(R.string.import_subscription_success)
+                    } else {
+                        toast(R.string.import_subscription_failure)
+                    }
+                }
+            }
+        }
+    }
+}
