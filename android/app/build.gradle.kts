@@ -93,6 +93,8 @@ android {
     // Если var не задан — поведение не меняется (CI-сборка остаётся
     // универсальной для всех 3 ABI).
     val abiFilterEnv: String? = System.getenv("LXBOX_ABI_FILTER")
+    val localArm64Only =
+        abiFilterEnv.isNullOrBlank() && System.getenv("CI").isNullOrBlank()
     if (!abiFilterEnv.isNullOrBlank()) {
         val keepAbis = abiFilterEnv.split(",").map { it.trim() }.toSet()
         defaultConfig.ndk.abiFilters.clear()
@@ -106,6 +108,14 @@ android {
             for (abi in excludeAbis) {
                 jniLibs.excludes += "lib/$abi/**"
             }
+        }
+    } else if (localArm64Only) {
+        // Faster local debug/release installs on arm64 phones: drop other ABIs
+        // from libbox.aar (~55–66 MB each). Override with LXBOX_ABI_FILTER or CI=1.
+        packaging {
+            jniLibs.excludes += "lib/armeabi-v7a/**"
+            jniLibs.excludes += "lib/x86_64/**"
+            jniLibs.excludes += "lib/x86/**"
         }
     }
 
@@ -124,7 +134,7 @@ android {
         debug {
             // Local debug installs: only arm64 unless LXBOX_ABI_FILTER / CI set.
             // Cuts libbox packaging time and APK size on a typical phone.
-            if (abiFilterEnv.isNullOrBlank() && System.getenv("CI").isNullOrBlank()) {
+            if (localArm64Only) {
                 ndk.abiFilters.clear()
                 ndk.abiFilters.add("arm64-v8a")
             }
