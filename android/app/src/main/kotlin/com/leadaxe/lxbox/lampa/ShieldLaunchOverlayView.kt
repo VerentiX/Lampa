@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Camera
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Matrix
@@ -47,6 +48,8 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         val cool: Boolean
     )
 
+    private val camera = Camera()
+    private val matrix3d = Matrix()
     private val shieldPath = Path()
     private val checkPath = Path()
     private val gearPathA = Path()
@@ -405,23 +408,41 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         }
 
         val save = canvas.save()
-        canvas.translate(x, y)
-        canvas.scale(pathScale, pathScale)
-        // Cheap yaw: canvas.rotate instead of Camera/Matrix3D (was a big mid-flight cost).
-        if (seatT <= 0.25f && kotlin.math.abs(rotY) > 0.5f) {
-            canvas.rotate(rotY * 0.35f)
+        // Lightweight 3D: Camera only while tumbling in flight. Far z = soft
+        // perspective (pretty, cheap). Face-on seat skips Camera entirely.
+        val useCamera = seatT <= 0.22f && bodyAlpha > 0.05f
+        if (useCamera) {
+            camera.save()
+            // Farther than default (-8) → gentler foreshortening, less GPU cost.
+            camera.setLocation(0f, 0f, -14f)
+            // Keep yaw in a readable band so we don't spin endless full turns.
+            val yaw = ((rotY % 360f) + 360f) % 360f
+            val tilt = when {
+                yaw <= 180f -> yaw
+                else -> yaw - 360f
+            }.coerceIn(-55f, 55f)
+            camera.rotateY(tilt)
+            camera.getMatrix(matrix3d)
+            camera.restore()
+            matrix3d.preScale(pathScale, pathScale)
+            matrix3d.postTranslate(x, y)
+            canvas.concat(matrix3d)
+            val face = kotlin.math.abs(cos(tilt * deg2rad))
+            ensureBodyShader((face * 40f).toInt(), 0.8f + 0.2f * face)
+        } else {
+            canvas.translate(x, y)
+            canvas.scale(pathScale, pathScale)
+            ensureBodyShader(40, 1f)
         }
-        val faceShade = if (seatT > 0.25f) 1f else 0.78f + 0.22f * kotlin.math.abs(cos(rotY * deg2rad))
-        ensureBodyShader((faceShade * 40f).toInt(), faceShade)
 
-        if (pose.shieldSplit > 0.02f && seatT <= 0.25f) {
+        if (pose.shieldSplit > 0.02f && seatT <= 0.22f) {
             drawChassis(canvas, pose.shieldSplit, bodyAlpha)
             drawClockwork(canvas, pose.gearAngle, pose.shieldSplit * bodyAlpha)
             if (pose.hottabychReveal > 0.02f) {
                 drawEmergingHottabych(canvas, pose.hottabychReveal, pose.hottabychWink, bodyAlpha)
             }
         }
-        drawSplitShield(canvas, if (seatT > 0.25f) 0f else pose.shieldSplit, bodyAlpha)
+        drawSplitShield(canvas, if (seatT > 0.22f) 0f else pose.shieldSplit, bodyAlpha)
 
         canvas.restoreToCount(save)
 

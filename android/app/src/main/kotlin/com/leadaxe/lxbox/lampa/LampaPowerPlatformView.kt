@@ -136,15 +136,17 @@ private class LampaPowerPlatformView(
                 }
             }
             else -> {
-                cancelCeremony()
+                // Disconnect must stay light: the old soft-settle + 3D flip stack
+                // stuttered on Hybrid Composition when stopping the VPN.
+                if (ceremonyActive || LampaCeremony.overlay()?.isPlaying == true) {
+                    cancelCeremony()
+                }
                 val changed = lastConnected == true
                 if (changed) {
-                    playSoftSettle()
-                    playFlip(powered = false)
+                    playDisconnect()
                 } else {
                     seat(false, flip = false)
                 }
-                LampaCeremony.frost()?.melt()
             }
         }
         lastConnected = when {
@@ -273,6 +275,33 @@ private class LampaPowerPlatformView(
             .scaleY(1f)
             .setDuration(140L)
             .setInterpolator(DecelerateInterpolator())
+            .start()
+    }
+
+    /** Fast off transition — no competing ViewPropertyAnimator stacks. */
+    private fun playDisconnect() {
+        content.animate().cancel()
+        button.animate().cancel()
+        glow.animate().cancel()
+        content.rotationY = 0f
+        button.scaleX = 1f
+        button.scaleY = 1f
+        shieldSeated = false
+        shield.setPowered(false, animate = true)
+        button.setBackgroundResource(R.drawable.bg_power_btn_inactive)
+        glow.animate().alpha(0f).setDuration(200L).start()
+        button.animate()
+            .scaleX(0.96f)
+            .scaleY(0.96f)
+            .setDuration(90L)
+            .withEndAction {
+                button.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(160L)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
             .start()
     }
 

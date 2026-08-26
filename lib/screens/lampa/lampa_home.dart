@@ -344,7 +344,10 @@ class _LampaHomeState extends State<LampaHome> {
                         child: _PowerDock(
                           connecting:
                               widget.state.tunnel == TunnelStatus.connecting,
-                          connected: up,
+                          // Keep "on" look while Stopping — avoids a heavy
+                          // disconnect flip fighting VPN teardown on the UI thread.
+                          connected: up ||
+                              widget.state.tunnel == TunnelStatus.stopping,
                           onTap: _working ? null : widget.onToggle,
                         ),
                       ),
