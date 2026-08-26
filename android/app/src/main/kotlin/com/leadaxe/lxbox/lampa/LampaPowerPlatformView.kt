@@ -305,19 +305,6 @@ private class LampaPowerPlatformView(
             .start()
     }
 
-    private fun playSoftSettle() {
-        button.clearAnimation()
-        button.animate().cancel()
-        button.scaleX = 0.98f
-        button.scaleY = 0.98f
-        button.animate()
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(280L)
-            .setInterpolator(DecelerateInterpolator())
-            .start()
-    }
-
     private fun freezeIdle() {
         button.clearAnimation()
         button.animate().cancel()
