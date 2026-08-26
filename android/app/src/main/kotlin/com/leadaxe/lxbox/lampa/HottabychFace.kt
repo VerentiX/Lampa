@@ -129,19 +129,42 @@ object HottabychFace {
         canvas.drawLine(-12f, -22f, -2.5f, -23f, stroke)
         canvas.drawLine(2.5f, -23f, 12f, -22f, stroke)
 
-        // Deep-set eyes.
+        // Deep-set eyes — left eye winks with a smooth lid squash (not a hard snap).
+        val winkAmt = wink.coerceIn(0f, 1f)
+        val leftOpen = (1f - winkAmt).coerceIn(0.08f, 1f)
+
+        // Right eye stays open.
         fill.color = withAlpha(0xFFF8F0, a)
-        canvas.drawOval(-12f, -20f, -3.5f, -11f, fill)
         canvas.drawOval(3.5f, -20f, 12f, -11f, fill)
         fill.color = withAlpha(0x1A1410, a)
-        if (wink > 0.4f) {
-            stroke.strokeWidth = 2.5f
-            stroke.color = withAlpha(0x1A1410, a)
-            canvas.drawLine(-12f, -15.5f, -3.5f, -15.5f, stroke)
-        } else {
-            canvas.drawCircle(-7.6f, -15.2f, 2.15f, fill)
-        }
         canvas.drawCircle(7.6f, -15.2f, 2.15f, fill)
+
+        // Left eye: squash vertically as the lid closes.
+        val eyeCx = -7.75f
+        val eyeCy = -15.5f
+        canvas.save()
+        canvas.scale(1f, leftOpen, eyeCx, eyeCy)
+        fill.color = withAlpha(0xFFF8F0, a)
+        canvas.drawOval(-12f, -20f, -3.5f, -11f, fill)
+        if (leftOpen > 0.28f) {
+            fill.color = withAlpha(0x1A1410, (a * leftOpen).toInt().coerceIn(0, 255))
+            canvas.drawCircle(eyeCx, eyeCy + 0.3f, 2.15f, fill)
+        }
+        canvas.restore()
+
+        // Soft lid line grows with the wink.
+        if (winkAmt > 0.08f) {
+            stroke.strokeWidth = 2.2f + 0.8f * winkAmt
+            stroke.strokeCap = Paint.Cap.ROUND
+            stroke.color = withAlpha(0x3A2A20, ((a * (0.35f + 0.65f * winkAmt)).toInt()))
+            canvas.drawLine(-12f, eyeCy, -3.5f, eyeCy, stroke)
+            // Upper lid shadow when almost closed.
+            if (winkAmt > 0.55f) {
+                stroke.strokeWidth = 3.2f
+                stroke.color = withAlpha(0x2A1C14, ((a * (winkAmt - 0.55f) / 0.45f).toInt().coerceIn(0, 255)))
+                canvas.drawLine(-11.5f, eyeCy - 1.2f, -4f, eyeCy - 1.2f, stroke)
+            }
+        }
 
         // Strong nose.
         stroke.strokeWidth = 1.7f

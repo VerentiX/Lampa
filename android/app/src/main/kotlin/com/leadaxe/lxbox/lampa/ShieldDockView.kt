@@ -207,11 +207,11 @@ class ShieldDockView @JvmOverloads constructor(
             canvas.save()
             canvas.translate(cx, cy + r * 0.04f)
             canvas.scale(socketScale * 0.58f, socketScale * 0.58f)
-            val wink = if (pulse > 0.72f) ((pulse - 0.72f) / 0.28f).coerceIn(0f, 1f) else 0f
+            // No perpetual wink on the docked face — that looked like a stuck eye.
             HottabychFace.draw(
                 canvas,
                 reveal = 1f,
-                wink = wink,
+                wink = 0f,
                 alpha = on,
                 fill = fillPaint,
                 stroke = strokePaint,

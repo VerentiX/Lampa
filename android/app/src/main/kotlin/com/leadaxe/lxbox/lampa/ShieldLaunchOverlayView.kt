@@ -948,11 +948,24 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         val emergeIn = mechEase.getInterpolation(segment(t, 0.40f, 0.50f))
         val emergeOut = 1f - mechEase.getInterpolation(segment(t, 0.58f, 0.68f))
         val hottabychReveal = (shieldSplit * emergeIn * emergeOut).coerceIn(0f, 1f)
-        val winkWave = sin((t - 0.47f) * 38f)
-        val hottabychWink = if (hottabychReveal > 0.55f && t in 0.47f..0.64f && winkWave > 0.62f) {
-            ((winkWave - 0.62f) / 0.38f).coerceIn(0f, 1f)
-        } else {
-            0f
+        // One deliberate wink while fully visible — not a flickering sin wave.
+        val winkCloseStart = 0.515f
+        val winkHold = 0.538f
+        val winkOpenEnd = 0.575f
+        val hottabychWink = when {
+            hottabychReveal < 0.72f -> 0f
+            t < winkCloseStart -> 0f
+            t < winkHold -> {
+                // Ease shut.
+                val u = segment(t, winkCloseStart, winkHold)
+                u * u * (3f - 2f * u)
+            }
+            t < winkOpenEnd -> {
+                // Ease open (slightly slower).
+                val u = segment(t, winkHold, winkOpenEnd)
+                1f - (u * u * (3f - 2f * u))
+            }
+            else -> 0f
         }
 
         val gearAngle = t * 520f + shieldSplit * 180f
