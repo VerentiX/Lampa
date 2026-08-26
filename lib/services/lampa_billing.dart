@@ -93,21 +93,49 @@ class LampaOwnedPackage {
   final String title;
   final int daysLeft, startsAt;
   final bool active, upcoming;
+  /// Traffic allowance in GB when the API provides it (or parsed from title).
+  final int trafficGb;
+
   const LampaOwnedPackage(
     this.title,
     this.daysLeft,
     this.startsAt,
     this.active,
-    this.upcoming,
-  );
-  factory LampaOwnedPackage.fromJson(Map<String, dynamic> j) =>
-      LampaOwnedPackage(
-        '${j['title'] ?? ''}',
-        (j['daysLeft'] as num?)?.toInt() ?? 0,
-        (j['startsAt'] as num?)?.toInt() ?? 0,
-        j['active'] == true,
-        j['upcoming'] == true,
-      );
+    this.upcoming, {
+    this.trafficGb = 0,
+  });
+
+  factory LampaOwnedPackage.fromJson(Map<String, dynamic> j) {
+    final title = '${j['title'] ?? ''}';
+    final fromFields = (j['trafficGb'] as num?)?.toInt() ??
+        (j['limitGb'] as num?)?.toInt() ??
+        (j['gb'] as num?)?.toInt() ??
+        0;
+    return LampaOwnedPackage(
+      title,
+      (j['daysLeft'] as num?)?.toInt() ?? 0,
+      (j['startsAt'] as num?)?.toInt() ?? 0,
+      j['active'] == true,
+      j['upcoming'] == true,
+      trafficGb: fromFields > 0 ? fromFields : (_gbFromTitle(title) ?? 0),
+    );
+  }
+
+  static int? _gbFromTitle(String title) {
+    final m = RegExp(r'(\d+)\s*[гgGg][бbBаa]?', caseSensitive: false)
+        .firstMatch(title);
+    return m == null ? null : int.tryParse(m.group(1)!);
+  }
+
+  /// Compact label for chips: prefer GB, fall back to cleaned title.
+  String get shortLabel {
+    if (trafficGb > 0) return '$trafficGb ГБ';
+    final cleaned = title
+        .replaceAll(RegExp(r'[+＋]'), '')
+        .replaceAll(RegExp(r'\s{2,}'), ' ')
+        .trim();
+    return cleaned.isEmpty ? 'Пакет' : cleaned;
+  }
 }
 
 class LampaBilling {

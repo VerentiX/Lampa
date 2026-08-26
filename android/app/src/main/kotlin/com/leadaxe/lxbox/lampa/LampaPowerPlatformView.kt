@@ -50,19 +50,19 @@ private class LampaPowerPlatformView(
         root.clipToPadding = false
         glow.setBackgroundResource(R.drawable.bg_power_glow)
         glow.alpha = if (shieldSeated && animate) 1f else 0f
-        root.addView(glow, frame(248, 248, Gravity.CENTER))
+        root.addView(glow, frame(220, 220, Gravity.CENTER))
 
         button.setBackgroundResource(
             if (shieldSeated) R.drawable.bg_power_btn_connected else R.drawable.bg_power_btn_inactive
         )
-        button.elevation = dp(14).toFloat()
+        button.elevation = dp(10).toFloat()
         button.isClickable = true
         button.setOnClickListener { channel.invokeMethod("tap", null) }
 
-        content.setPadding(dp(10), dp(10), dp(10), dp(10))
+        content.setPadding(dp(9), dp(9), dp(9), dp(9))
         content.addView(shield, frameMatch())
         button.addView(content, frameMatch())
-        root.addView(button, frame(192, 192, Gravity.CENTER))
+        root.addView(button, frame(168, 168, Gravity.CENTER))
 
         shield.setPowered(shieldSeated, animate = false)
         channel.setMethodCallHandler(this)

@@ -6,7 +6,6 @@ import '../../controllers/subscription_controller.dart';
 import '../../models/home_state.dart';
 import '../../models/node_spec.dart';
 import '../../models/tunnel_status.dart';
-import '../../services/format_utils.dart' as fmt;
 import '../../services/lampa_app_update.dart';
 import '../../services/lampa_auto_updates.dart';
 import '../../services/lampa_billing.dart';
@@ -340,7 +339,7 @@ class _LampaHomeState extends State<LampaHome> {
                   child: Column(
                     children: [
                       Transform.translate(
-                        offset: const Offset(0, -10),
+                        offset: const Offset(0, 4),
                         child: _PowerDock(
                           connecting:
                               widget.state.tunnel == TunnelStatus.connecting,
@@ -357,11 +356,12 @@ class _LampaHomeState extends State<LampaHome> {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       if (widget.onOpenSplitTunnel != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -505,24 +505,26 @@ class _LampaHomeState extends State<LampaHome> {
                       padding: const EdgeInsets.only(bottom: 24),
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                          padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
                           child: Row(
                             children: [
                               const Expanded(
                                 child: Text(
                                   'Подписки',
                                   style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                    color: Color(0xccffffff),
                                   ),
                                 ),
                               ),
                               if (_urlSubs.length > 1)
                                 const Text(
-                                  'Выберите подписку',
+                                  'выберите',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0x80ffffff),
+                                    fontSize: 11,
+                                    color: Color(0x66ffffff),
                                   ),
                                 ),
                             ],
@@ -992,50 +994,48 @@ class _LampaHomeState extends State<LampaHome> {
     final nodes = entry.nodeCount;
     final expandedId = _expandedSubId ?? (active ? entry.id : null);
     final expanded = expandedId == entry.id;
-    // Soft Hottabych (warm lamp / amber) — only when several subscriptions.
     final highlight = multi && active;
     final accent = highlight
         ? const Color(0x66ffb347)
-        : const Color(0x33ffffff);
+        : const Color(0x28ffffff);
     final bg = highlight
-        ? const Color(0x18ff8f00)
-        : const Color(0x1fffffff);
+        ? const Color(0x14ff8f00)
+        : const Color(0x14ffffff);
 
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: accent, width: highlight ? 1.2 : 1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent, width: highlight ? 1.1 : 1),
       ),
       child: Column(
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(18),
             onTap: () async {
               if (!active && widget.onSelectSubscription != null) {
                 await widget.onSelectSubscription!(entry);
               }
               setState(() {
-                _expandedSubId =
-                    expanded && active ? null : entry.id;
+                _expandedSubId = expanded && active ? null : entry.id;
               });
               _reload();
             },
             child: SizedBox(
-              height: 72,
+              height: 52,
               child: Row(
                 children: [
                   SizedBox(
-                    width: 54,
+                    width: 40,
                     child: AnimatedRotation(
                       turns: expanded ? 0 : -.25,
-                      duration: const Duration(milliseconds: 220),
+                      duration: const Duration(milliseconds: 200),
                       child: Icon(
-                        Icons.arrow_drop_down,
-                        size: 36,
+                        Icons.expand_more,
+                        size: 26,
                         color: highlight
                             ? const Color(0xffffc46b)
-                            : const Color(0xc9ffffff),
+                            : const Color(0x99ffffff),
                       ),
                     ),
                   ),
@@ -1044,56 +1044,29 @@ class _LampaHomeState extends State<LampaHome> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                shown,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: highlight
-                                      ? const Color(0xffffe7c2)
-                                      : Colors.white,
-                                ),
-                              ),
-                            ),
-                            if (highlight) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x22ff8f00),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: const Color(0x44ffb347),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Активна',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Color(0xffffc46b),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 3),
                         Text(
-                          nodes > 0
-                              ? '$nodes конфигураций'
-                              : 'Нажмите, чтобы выбрать',
+                          shown,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: highlight
+                                ? const Color(0xffffe7c2)
+                                : Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          [
+                            if (nodes > 0) '$nodes конф.',
+                            if (highlight) 'активна',
+                            if (nodes == 0 && !highlight)
+                              'нажмите, чтобы выбрать',
+                          ].join(' · '),
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0x8fffffff),
+                            color: Color(0x88ffffff),
                           ),
                         ),
                       ],
@@ -1102,12 +1075,13 @@ class _LampaHomeState extends State<LampaHome> {
                   PopupMenuButton<String>(
                     tooltip: 'Действия',
                     color: const Color(0xff1a1208),
+                    padding: EdgeInsets.zero,
                     icon: const Icon(
-                      Icons.more_vert,
+                      Icons.more_horiz,
                       color: Color(0xffd7f0ff),
+                      size: 22,
                     ),
-                    onSelected: (action) =>
-                        _onSubMenuAction(action, entry),
+                    onSelected: (action) => _onSubMenuAction(action, entry),
                     itemBuilder: (_) => const [
                       PopupMenuItem(
                         value: 'copy',
@@ -1123,16 +1097,17 @@ class _LampaHomeState extends State<LampaHome> {
                       ),
                     ],
                   ),
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
           ),
           AnimatedSize(
-            duration: const Duration(milliseconds: 260),
+            duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
             child: expanded && active
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                     child: _billingPanel(),
                   )
                 : const SizedBox.shrink(),
@@ -1266,72 +1241,78 @@ class _LampaHomeState extends State<LampaHome> {
         final limitFromMeta = entry?.totalBytes ?? 0;
         final used = usedFromBilling > 0 ? usedFromBilling : usedFromMeta;
         final limit = limitFromBilling > 0 ? limitFromBilling : limitFromMeta;
+        final daysOk = info.daysLeft > 0;
         return _statsBox(
           Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    size: 24,
-                    color: Color(0xff9ec4ff),
-                  ),
-                  const SizedBox(width: 9),
                   Expanded(
-                    child: Container(
-                      height: 26,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0x30101635),
-                        borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: const Color(0x307aa7ff)),
-                      ),
-                      child: Text(
-                        info.title,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    child: Text(
+                      info.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xffe8f0ff),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Text(
-                    info.daysLeft > 0
-                        ? 'Осталось ${info.daysLeft} дн.'
-                        : 'Срок истёк',
-                    style: const TextStyle(fontSize: 11),
+                    daysOk ? '${info.daysLeft} дн.' : 'истёк',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.4,
+                      color: daysOk
+                          ? const Color(0xffffd180)
+                          : const Color(0xffff8a80),
+                    ),
                   ),
                 ],
               ),
               if (used > 0 || limit > 0) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _trafficRow(used: used, limit: limit),
               ],
-              const SizedBox(height: 10),
               if (info.packages.isNotEmpty) ...[
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Пакеты',
-                    style: TextStyle(fontSize: 12, color: Color(0x99ffffff)),
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: info.packages.map(_packageChip).toList(),
                 ),
-                const SizedBox(height: 4),
-                ...info.packages.map(_packageRow),
               ],
-              if (info.paymentsEnabled && info.plans.isNotEmpty)
-                TextButton(
-                  onPressed: () => _choosePlan(info),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Text(
+              if (info.paymentsEnabled && info.plans.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xffffd180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => _choosePlan(info),
+                    child: const Text(
                       'Продлить',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xffffd180)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         );
@@ -1341,81 +1322,106 @@ class _LampaHomeState extends State<LampaHome> {
 
   Widget _trafficRow({required int used, required int limit}) {
     final pct = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
-    final usedLabel = fmt.formatBytes(used, spaced: true);
-    final limitLabel =
-        limit > 0 ? fmt.formatBytes(limit, spaced: true) : '∞';
+    final usedGb = used / (1024 * 1024 * 1024);
+    final limitGb = limit / (1024 * 1024 * 1024);
+    final usedLabel = usedGb >= 10
+        ? usedGb.toStringAsFixed(0)
+        : usedGb.toStringAsFixed(1);
+    final limitLabel = limit <= 0
+        ? '∞'
+        : (limitGb >= 10
+            ? limitGb.toStringAsFixed(0)
+            : limitGb.toStringAsFixed(1));
+    final barColor = pct > 0.9
+        ? const Color(0xffff8a80)
+        : pct > 0.7
+            ? const Color(0xffffb347)
+            : const Color(0xffffc46b);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: limit > 0 ? pct : null,
-            minHeight: 6,
-            backgroundColor: const Color(0x33101635),
-            color: const Color(0xff00f5d4),
-          ),
+        Row(
+          children: [
+            Text(
+              '$usedLabel / $limitLabel ГБ',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xddffffff),
+              ),
+            ),
+            const Spacer(),
+            if (limit > 0)
+              Text(
+                '${(pct * 100).round()}%',
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0x88ffffff),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 4),
-        Text(
-          'Трафик: $usedLabel / $limitLabel',
-          style: const TextStyle(fontSize: 11, color: Color(0x99ffffff)),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: limit > 0 ? pct : null,
+            minHeight: 4,
+            backgroundColor: const Color(0x33ffffff),
+            color: barColor,
+          ),
         ),
       ],
     );
   }
 
-  Widget _packageRow(LampaOwnedPackage package) {
+  Widget _packageChip(LampaOwnedPackage package) {
     final starts = package.startsAt > 0
         ? DateTime.fromMillisecondsSinceEpoch(package.startsAt * 1000)
         : null;
     final startText = starts == null
-        ? ''
+        ? null
         : '${starts.day.toString().padLeft(2, '0')}.${starts.month.toString().padLeft(2, '0')}';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: package.active
-                  ? const Color(0xff00f5d4)
-                  : const Color(0xffffa726),
-            ),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              package.active
-                  ? '${package.title} — ещё ${package.daysLeft} дн.'
-                  : '${package.title}${startText.isEmpty ? '' : ' — с $startText'} · ${package.daysLeft} дн.',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          if (package.active)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0x3300f5d4),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('сейчас', style: TextStyle(fontSize: 10)),
-            ),
-        ],
+    final days = package.daysLeft > 0 ? '${package.daysLeft}д' : null;
+    final parts = <String>[
+      package.shortLabel,
+      if (package.active && days != null) days,
+      if (!package.active && startText != null) 'с $startText',
+      if (!package.active && days != null) days,
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: package.active
+            ? const Color(0x28ffb347)
+            : const Color(0x18ffffff),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: package.active
+              ? const Color(0x66ffb347)
+              : const Color(0x33ffffff),
+        ),
+      ),
+      child: Text(
+        parts.join(' · '),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: package.active
+              ? const Color(0xffffe0a8)
+              : const Color(0xccffffff),
+        ),
       ),
     );
   }
 
   Widget _statsBox(Widget child) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(8),
+    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
     decoration: BoxDecoration(
-      color: const Color(0x24101635),
-      borderRadius: BorderRadius.circular(13),
-      border: Border.all(color: const Color(0x307aa7ff)),
+      color: const Color(0x18101008),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0x33ffb347)),
     ),
     child: child,
   );
@@ -1438,9 +1444,15 @@ class _LampaHomeState extends State<LampaHome> {
             ),
             ...info.plans.map(
               (p) => ListTile(
-                title: Text(p.title),
-                subtitle: Text('${p.trafficGb} ГБ · ${p.days} дн.'),
-                trailing: Text('${p.priceRub} ₽'),
+                title: Text('${p.trafficGb} ГБ'),
+                subtitle: Text('${p.days} дн. · ${p.title}'),
+                trailing: Text(
+                  '${p.priceRub} ₽',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xffffd180),
+                  ),
+                ),
                 onTap: () => Navigator.pop(context, p),
               ),
             ),
@@ -1747,8 +1759,8 @@ class _PowerDockState extends State<_PowerDock> with WidgetsBindingObserver {
     }
     return RepaintBoundary(
       child: SizedBox(
-        width: 220,
-        height: 220,
+        width: 196,
+        height: 196,
         child: AndroidView(
           viewType: 'com.leadaxe.lxbox/lampa_power',
           creationParams: {
