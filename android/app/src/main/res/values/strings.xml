@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Consumer (Lampa / Хаттабыч) native surfaces. -->
+<resources>
+    <string name="app_name" translatable="false">Lampa</string>
+
+    <!-- Quick Connect (tile / shortcuts consent flow) -->
+    <string name="qc_first_open">Opening Lampa for VPN permission (one-time)</string>
+    <string name="qc_consent_denied">VPN permission denied. Open Lampa to retry.</string>
+    <string name="qc_connect_label">Connect</string>
+    <string name="qc_disconnect_label">Disconnect</string>
+
+    <!-- Foreground-service notification -->
+    <string name="notification_channel_name">Lampa connection</string>
+    <string name="vpn_notification_channel_name">%1$s connection</string>
+    <string name="vpn_notification_title">%1$s · %2$s</string>
+    <string name="notification_channel_description">Shown while Lampa VPN is active</string>
+    <string name="notification_status_starting">Connecting…</string>
+    <string name="status_connected">Connected</string>
+    <string name="notification_action_stop">Disconnect</string>
+    <string name="notification_action_reconnect">Reconnect</string>
+    <string name="notification_error_title">Error</string>
+    <string name="core_channel_fallback_name">Notifications</string>
+
+    <!-- stopAndAlert frames. Payload (%1$s) is OS/kernel text, verbatim. -->
+    <string name="stop_alert_unknown_error">Unknown error</string>
+    <string name="stop_alert_libbox_init_failed">Failed to start engine: %1$s</string>
+    <string name="stop_alert_empty_config">No configuration — add a Хаттабыч subscription</string>
+    <string name="stop_alert_no_command_server">Service is not ready</string>
+    <string name="stop_alert_start_failed">Failed to connect: %1$s</string>
+
+    <!-- QS tile subtitles -->
+    <string name="tile_status_connecting">Connecting…</string>
+    <string name="tile_status_stopping">Disconnecting…</string>
+    <string name="tile_status_disconnected">Disconnected</string>
+
+    <!-- Locale/Tasker -->
+    <string name="label_plugin_custom">Lampa: Custom…</string>
+    <string name="label_plugin_start">Lampa: Connect</string>
+    <string name="label_plugin_stop">Lampa: Disconnect</string>
+    <string name="label_plugin_toggle">Lampa: Toggle</string>
+    <string name="automation_blurb_start">Connect VPN</string>
+    <string name="automation_blurb_stop">Disconnect VPN</string>
+    <string name="automation_blurb_toggle">Toggle VPN</string>
+    <string name="automation_command_prompt">Lampa command:</string>
+    <string name="automation_condition_prompt">Lampa condition:</string>
+    <string name="automation_cmd_switch_node">Switch node</string>
+    <string name="automation_cmd_set_group">Set group</string>
+    <string name="automation_cmd_urltest_group">URL-test group</string>
+    <string name="automation_cmd_refresh_subs">Refresh subscriptions</string>
+    <string name="automation_cmd_rebuild_config">Rebuild config</string>
+    <string name="automation_cmd_reset_network">Reset network</string>
+    <string name="automation_check_vpn_up">VPN is up</string>
+    <string name="automation_check_active_node">Active node =</string>
+    <string name="automation_check_active_group">Active group =</string>
+    <string name="automation_value_label">Value (%1$s):</string>
+    <string name="automation_value_plain">Value:</string>
+    <string name="automation_save">Save</string>
+</resources>

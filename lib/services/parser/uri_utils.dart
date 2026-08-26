@@ -1,0 +1,312 @@
+import 'dart:convert';
+import 'dart:math';
+
+import '../app_log.dart';
+
+/// Максимальная длина URI (защита от мусорных base64-бомб). Совпадает с v1.
+const int maxURILength = 65536;
+
+/// §084 M7 — charset валидного имени HTTP-заголовка из DuckSoft de-facto
+/// спеки naive URI: `! # $ % & ' * + - . 0-9 A-Z \ ^ _ ` a-z | ~`.
+/// Единый источник для parser (uri_parsers) и emit (node_spec_emit).
+final RegExp naiveHeaderNameRe =
+    RegExp(r"^[!#$%&'*+\-.0-9A-Z\\^_`a-z|~]+$");
+
+/// True если `name` — валидное имя naive HTTP-заголовка (непустое +
+/// matches [naiveHeaderNameRe]).
+bool isValidNaiveHeaderName(String name) =>
+    name.isNotEmpty && naiveHeaderNameRe.hasMatch(name);
+
+/// Безопасный base64-decode с пробой 4 вариантов (standard/url-safe ×
+/// padded/unpadded). Возвращает bytes или null. Порт v1 `_decodeBase64`.
+List<int>? decodeBase64Safe(String s) {
+  final input = s.replaceAll(RegExp(r'\s+'), '');
+  for (final codec in [base64Url, base64]) {
+    for (final pad in [true, false]) {
+      try {
+        var attempt = input;
+        if (pad) {
+          final rem = attempt.length % 4;
+          if (rem == 2) attempt += '==';
+          if (rem == 3) attempt += '=';
+        }
+        return codec.decode(attempt);
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+
+/// §025 — WireGuard `reserved` (Cloudflare WARP client_id), ровно 3 байта.
+/// Принимает два формата:
+///   • `b0,b1,b2` — три десятичных числа 0..255 (наш round-trip формат);
+///   • base64 (WARP `client_id`, 3 байта) — через [decodeBase64Safe].
+/// Возвращает `[b0,b1,b2]` или null (битый / не 3 байта / вне 0..255).
+List<int>? parseReserved(String raw) {
+  final s = raw.trim();
+  if (s.isEmpty) return null;
+  if (s.contains(',')) {
+    final parts = s.split(',').map((e) => e.trim()).toList();
+    if (parts.length != 3) return null;
+    final out = <int>[];
+    for (final p in parts) {
+      final n = int.tryParse(p);
+      if (n == null || n < 0 || n > 255) return null;
+      out.add(n);
+    }
+    return out;
+  }
+  final bytes = decodeBase64Safe(s);
+  if (bytes == null || bytes.length != 3) return null;
+  if (bytes.any((b) => b < 0 || b > 255)) return null;
+  return List<int>.from(bytes);
+}
+
+/// UTF-8 декод с fallback'ом на allowMalformed.
+String utf8Lossy(List<int> bytes) =>
+    utf8.decode(bytes, allowMalformed: true);
+
+/// Удаление управляющих символов из display-строк (оставляем \t \n \r).
+String sanitizeForDisplay(String s) {
+  if (s.isEmpty) return s;
+  final buf = StringBuffer();
+  for (final r in s.runes) {
+    if (r == 9 || r == 10 || r == 13) {
+      buf.writeCharCode(r);
+      continue;
+    }
+    if (r <= 0x1F || r == 0x7F) continue;
+    buf.writeCharCode(r);
+  }
+  return buf.toString();
+}
+
+/// Tag из fragment'а или fallback'а `<scheme>-<server>-<port>`.
+/// Нормализация: `🇪🇳` → `🇬🇧` (оставшийся артефакт из v1).
+String tagFromLabel(String label, String scheme, String server, int port) {
+  if (label.trim().isNotEmpty) {
+    return label.trim().replaceAll('🇪🇳', '🇬🇧');
+  }
+  return '$scheme-$server-$port';
+}
+
+/// Разбор `#fragment` → label.
+String decodeFragment(String fragment) {
+  if (fragment.isEmpty) return '';
+  try {
+    return sanitizeForDisplay(Uri.decodeComponent(fragment));
+  } catch (_) {
+    return sanitizeForDisplay(fragment);
+  }
+}
+
+/// Генерация UUID v4 (для `NodeSpec.id`). Используется при парсинге — id не
+/// приходит из URI, а присваивается в момент создания spec'а. Round-trip
+/// тесты сравнивают без `id`.
+final _rng = Random.secure();
+String newUuidV4() {
+  final b = List<int>.generate(16, (_) => _rng.nextInt(256));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  String h(int i) => b[i].toRadixString(16).padLeft(2, '0');
+  return '${h(0)}${h(1)}${h(2)}${h(3)}-'
+      '${h(4)}${h(5)}-'
+      '${h(6)}${h(7)}-'
+      '${h(8)}${h(9)}-'
+      '${h(10)}${h(11)}${h(12)}${h(13)}${h(14)}${h(15)}';
+}
+
+/// Нормализация insecure-флага: `insecure`, `allowInsecure`, `allowinsecure`,
+/// `skip-cert-verify` → bool. Значения `1`, `true`, `yes`.
+bool isTlsInsecure(Map<String, String> q) {
+  for (final key in [
+    'insecure',
+    'allowInsecure',
+    'allowinsecure',
+    'allow_insecure',
+    'skip-cert-verify',
+  ]) {
+    final v = (q[key] ?? '').toLowerCase().trim();
+    if (v == '1' || v == 'true' || v == 'yes') return true;
+  }
+  return false;
+}
+
+/// Allow-list нормализации VLESS/VMess `packetEncoding` к sing-box словарю.
+///
+/// Sing-box `vless.NewOutbound` (и VMess аналог) принимает ровно три формы
+/// (https://sing-box.sagernet.org/configuration/outbound/vless/):
+///   - `""` (omitted) — disabled, default
+///   - `"xudp"` — XUDP wrapper
+///   - `"packetaddr"` — packet-addr (v2ray 5+)
+///
+/// Любое другое значение → `E.New("unknown packet encoding: ", ...)` →
+/// panic в `format.ToString` (нативный краш `libbox.so` целиком, не
+/// «не подключилось»). Xray-style подписки кладут `packetEncoding=none`,
+/// имея в виду «без encoding» — для sing-box это семантический эквивалент
+/// omitted, дропаем молча. Регистр нормализуем (xudp/XUDP/Xudp валидны
+/// в URI; sing-box принимает только lowercase).
+///
+/// `tag` — опционально для warning'ов (диагностика проблемной подписки).
+String normalizePacketEncoding(String raw, {String? tag}) {
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty || v == 'none') return '';
+  if (v == 'xudp' || v == 'packetaddr') return v;
+  AppLog.I.warning(
+    "unknown packetEncoding='$raw'${tag != null ? ' in $tag' : ''} — dropping",
+  );
+  return '';
+}
+
+/// §097 — клиентский MTU для AWG-endpoint'а: `min(mtu, 1280)`.
+///
+/// 1280 = рекомендованный клиентский MTU самой AmneziaWG и минимальный
+/// IPv6 MTU → безопасно на любом пути (PPPoE 1492, mobile, вложенные
+/// туннели). Точный потолок `1500−60−max(s3,s4)` хрупок: предполагает
+/// path-MTU ровно 1500, чего у AWG-юзеров обычно нет. Асимметрия рисков:
+/// занижение лишь чуть мельчит пакеты, завышение — тихий облом
+/// (handshake есть, данных нет). Явно заниженный MTU уважаем; обычный
+/// WG не трогаем (вызывать только при наличии AWG-полей).
+int awgClampMtu(int? raw, String tag) {
+  if (raw == null) return 1280;
+  if (raw <= 1280) return raw;
+  AppLog.I.debug('$tag: clamped AWG mtu $raw→1280');
+  return 1280;
+}
+
+/// §106 — bare IP без CIDR-префикса (`172.16.0.2`) ломает sing-box на
+/// загрузке endpoint'а: `netip.ParsePrefix(...): no '/'`. Дефолтим bare
+/// IPv4 → `/32`, bare IPv6 (есть `:`) → `/128`. Пустое и уже-с-`/` не трогаем.
+/// Применяется к `address` и `allowed_ips` WG/AWG из всех входов.
+String ensureCidr(String addr) {
+  final s = addr.trim();
+  if (s.isEmpty || s.contains('/')) return s;
+  return s.contains(':') ? '$s/128' : '$s/32';
+}
+
+/// §106 — `wireguard://KEY@host`: если base64-ключ содержит сырой `/`,
+/// `Uri.tryParse` примет его за начало path и потеряет userInfo → ключ
+/// пропадёт. Percent-энкодим `/` **только** в userInfo-части (между `://`
+/// и первым `@`); уже-`%2F` не трогаем (там нет raw `/`); query не задеваем.
+String encodeUserInfoSlashes(String uri) {
+  final schemeEnd = uri.indexOf('://');
+  if (schemeEnd < 0) return uri;
+  final start = schemeEnd + 3;
+  final at = uri.indexOf('@', start);
+  if (at < 0) return uri;
+  final userInfo = uri.substring(start, at);
+  if (!userInfo.contains('/')) return uri;
+  return uri.substring(0, start) +
+      userInfo.replaceAll('/', '%2F') +
+      uri.substring(at);
+}
+
+/// Case-insensitive lookup query-параметра. В подписках `packetEncoding`
+/// встречается в разных регистрах (`packetencoding`, `PacketEncoding`),
+/// `Uri.queryParameters` case-sensitive. Возвращает первое совпадение
+/// или `null`. Точечный helper — общий CI-lookup для всех ключей менять
+/// семантику остальных параметров.
+String? queryParamCI(Map<String, String> q, String key) {
+  final lk = key.toLowerCase();
+  for (final e in q.entries) {
+    if (e.key.toLowerCase() == lk) return e.value;
+  }
+  return null;
+}
+
+/// §169 — валидный ли REALITY public key (X25519, ровно 32 байта).
+///
+/// КОРЕНЬ БАГА: битые публичные подписки вешают на `security=tls` ноды мусор
+/// `pbk=enabled` / `pbk=true`. Если строить REALITY-блок по «pbk непустой»,
+/// мусор уходит в `reality.public_key` → sing-box видит не-X25519 ключ и
+/// отвергает ВЕСЬ config.json (а не одну ноду) → VPN не поднимается вообще.
+///
+/// Правило: X25519 public key = 32 байта. После trim строка должна
+/// декодироваться как base64url/base64 (любой из 4 вариантов pad/url) ровно
+/// в 32 байта. `enabled`(7)/`true`(4)/`PK`(2)/пустота(0) отсекаются длиной.
+/// Невалидный pbk → REALITY не создаём, нода деградирует до plain TLS.
+bool isValidRealityPublicKey(String pbk) {
+  final s = pbk.trim();
+  if (s.isEmpty) return false;
+  final bytes = decodeBase64Safe(s);
+  return bytes != null && bytes.length == 32;
+}
+
+/// Reality short-id canonical form: hex-чар (0-9a-f), чётной длины, max 16.
+///
+/// §343: ядро декодирует short_id как hex в `[8]byte` — нечётная длина или
+/// >16 символов = fatal ВСЕГО конфига на старте (`decode short_id:
+/// encoding/hex: odd length hex string`). Xray-core валидирует идентично,
+/// т.е. такой sid не работает нигде — мусор по определению. По принципу
+/// §169 битое значение отбрасывается целиком (`''`), НЕ подгоняется:
+/// обрезка/дополнение дали бы валидную форму с чужим идентификатором
+/// (тихая порча — сервер сверяет sid побайтово). Пустой short_id для
+/// REALITY легален (клиент шлёт нулевой `[8]byte`).
+String normalizeRealityShortId(String s) {
+  final buf = StringBuffer();
+  for (final r in s.trim().runes) {
+    if (r >= 0x30 && r <= 0x39) {
+      buf.writeCharCode(r);
+    } else if (r >= 0x61 && r <= 0x66) {
+      buf.writeCharCode(r);
+    } else if (r >= 0x41 && r <= 0x46) {
+      buf.writeCharCode(r + 32);
+    }
+  }
+  final out = buf.toString();
+  return (out.length > 16 || out.length.isOdd) ? '' : out;
+}
+
+/// Нормализация VMess security/cipher к sing-box словарю.
+String normalizeVmessSecurity(String raw) {
+  final s = raw.toLowerCase().trim();
+  if (s.isEmpty || s == 'null' || s == 'undefined') return 'auto';
+  switch (s) {
+    case 'auto':
+    case 'none':
+    case 'zero':
+    case 'aes-128-gcm':
+    case 'chacha20-poly1305':
+    case 'aes-128-ctr':
+      return s;
+    case 'chacha20-ietf-poly1305':
+      return 'chacha20-poly1305';
+    default:
+      return 'auto';
+  }
+}
+
+/// Валидные методы Shadowsocks (sing-box).
+const shadowsocksMethods = {
+  '2022-blake3-aes-128-gcm',
+  '2022-blake3-aes-256-gcm',
+  '2022-blake3-chacha20-poly1305',
+  'none',
+  'aes-128-gcm',
+  'aes-192-gcm',
+  'aes-256-gcm',
+  'chacha20-ietf-poly1305',
+  'xchacha20-ietf-poly1305',
+};
+
+bool isValidShadowsocksMethod(String method) =>
+    shadowsocksMethods.contains(method);
+
+/// VLESS-порты, на которых обычно plain HTTP (без TLS) — как в v1.
+const plaintextVlessPorts = {80, 8080, 8880, 2052, 2082, 2086, 2095};
+
+/// URL-encode query-параметра (для `toUri()`). Пробел → `%20`, не `+`.
+String encodeParam(String s) => Uri.encodeQueryComponent(s).replaceAll('+', '%20');
+
+/// URL-encode fragment (для `toUri()` #label).
+String encodeFragment(String s) =>
+    Uri.encodeComponent(s).replaceAll('+', '%20');
+
+/// Собрать query-string из Map (детерминированный порядок ключей).
+String buildQuery(Map<String, String> params) {
+  if (params.isEmpty) return '';
+  final keys = params.keys.toList()..sort();
+  return keys
+      .map((k) => '${encodeParam(k)}=${encodeParam(params[k]!)}')
+      .join('&');
+}

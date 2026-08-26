@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Consumer (Lampa / Хаттабыч) native surfaces. -->
+<resources>
+    <string name="app_name" translatable="false">Lampa</string>
+
+    <!-- Quick Connect (tile / shortcuts consent flow) -->
+    <string name="qc_first_open">Открываем Lampa для разрешения VPN (один раз)</string>
+    <string name="qc_consent_denied">В разрешении VPN отказано. Откройте Lampa, чтобы повторить.</string>
+    <string name="qc_connect_label">Подключить</string>
+    <string name="qc_disconnect_label">Отключить</string>
+
+    <!-- Foreground-service notification -->
+    <string name="notification_channel_name">Подключение Lampa</string>
+    <string name="vpn_notification_channel_name">Подключение %1$s</string>
+    <string name="vpn_notification_title">%1$s · %2$s</string>
+    <string name="notification_channel_description">Показывается, пока VPN Lampa активен</string>
+    <string name="notification_status_starting">Подключение…</string>
+    <string name="status_connected">Подключено</string>
+    <string name="notification_action_stop">Отключить</string>
+    <string name="notification_action_reconnect">Переподключить</string>
+    <string name="notification_error_title">Ошибка</string>
+    <string name="core_channel_fallback_name">Уведомления</string>
+
+    <!-- stopAndAlert frames. Payload (%1$s) is OS/kernel text, verbatim. -->
+    <string name="stop_alert_unknown_error">Неизвестная ошибка</string>
+    <string name="stop_alert_libbox_init_failed">Не удалось запустить ядро: %1$s</string>
+    <string name="stop_alert_empty_config">Нет конфигурации — добавьте подписку Хаттабыч</string>
+    <string name="stop_alert_no_command_server">Сервис не готов</string>
+    <string name="stop_alert_start_failed">Не удалось подключиться: %1$s</string>
+
+    <!-- QS tile subtitles -->
+    <string name="tile_status_connecting">Подключение…</string>
+    <string name="tile_status_stopping">Отключение…</string>
+    <string name="tile_status_disconnected">Отключено</string>
+
+    <!-- Locale/Tasker — keep technical labels short -->
+    <string name="label_plugin_custom">Lampa: команда…</string>
+    <string name="label_plugin_start">Lampa: Подключить</string>
+    <string name="label_plugin_stop">Lampa: Отключить</string>
+    <string name="label_plugin_toggle">Lampa: Переключить</string>
+    <string name="automation_blurb_start">Подключить VPN</string>
+    <string name="automation_blurb_stop">Отключить VPN</string>
+    <string name="automation_blurb_toggle">Переключить VPN</string>
+    <string name="automation_command_prompt">Команда Lampa:</string>
+    <string name="automation_condition_prompt">Условие Lampa:</string>
+    <string name="automation_cmd_switch_node">Переключить узел</string>
+    <string name="automation_cmd_set_group">Задать группу</string>
+    <string name="automation_cmd_urltest_group">Автовыбор группы</string>
+    <string name="automation_cmd_refresh_subs">Обновить подписки</string>
+    <string name="automation_cmd_rebuild_config">Пересобрать конфиг</string>
+    <string name="automation_cmd_reset_network">Сбросить сеть</string>
+    <string name="automation_check_vpn_up">VPN включён</string>
+    <string name="automation_check_active_node">Активный узел =</string>
+    <string name="automation_check_active_group">Активная группа =</string>
+    <string name="automation_value_label">Значение (%1$s):</string>
+    <string name="automation_value_plain">Значение:</string>
+    <string name="automation_save">Сохранить</string>
+</resources>
