@@ -121,6 +121,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Local debug installs: only arm64 unless LXBOX_ABI_FILTER / CI set.
+            // Cuts libbox packaging time and APK size on a typical phone.
+            if (abiFilterEnv.isNullOrBlank() && System.getenv("CI").isNullOrBlank()) {
+                ndk.abiFilters.clear()
+                ndk.abiFilters.add("arm64-v8a")
+            }
+        }
         release {
             signingConfig =
                 if (hasReleaseKeystore()) {

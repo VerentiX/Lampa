@@ -287,15 +287,15 @@ class FrostOverlayView @JvmOverloads constructor(
                 if (freeze && progress >= bakeAtProgress && snapshot == null) {
                     captureSnapshot()
                 }
-                // ~36 FPS while growing; after bake, ~20 FPS is enough for alpha.
-                val interval = if (snapshot != null) 50_000_000L else 27_777_778L
-                val now = System.nanoTime()
-                if (lastDrawNs == 0L || now - lastDrawNs >= interval ||
-                    progress >= 0.995f || progress <= 0.01f
-                ) {
-                    lastDrawNs = now
-                    invalidate()
-                }
+            // Grow cracks at full refresh rate; after bake, ~30 FPS is enough for alpha.
+            val interval = if (snapshot != null) 33_000_000L else 0L
+            val now = System.nanoTime()
+            if (interval == 0L || lastDrawNs == 0L || now - lastDrawNs >= interval ||
+                progress >= 0.995f || progress <= 0.01f
+            ) {
+                lastDrawNs = now
+                invalidate()
+            }
             }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {

@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Camera
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Matrix
@@ -48,8 +47,6 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         val cool: Boolean
     )
 
-    private val camera = Camera()
-    private val matrix3d = Matrix()
     private val shieldPath = Path()
     private val checkPath = Path()
     private val gearPathA = Path()
@@ -189,14 +186,13 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
             sparks = buildSparks()
             playing = true
             paused = false
-            setLayerType(LAYER_TYPE_NONE, null)
+            setLayerType(LAYER_TYPE_HARDWARE, null)
             visibility = VISIBLE
             progress = 0f
             animator?.cancel()
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 3_200L
+                duration = 2_600L
                 interpolator = LinearNoOp
-                var lastDrawNs = 0L
                 addUpdateListener {
                     if (paused) return@addUpdateListener
                     progress = it.animatedValue as Float
@@ -206,13 +202,8 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
                         finishCeremony(completed = true)
                         return@addUpdateListener
                     }
-                    val now = System.nanoTime()
-                    // ~36 FPS cruise / approach — smooth without 60Hz cost.
-                    val interval = 27_777_778L
-                    if (lastDrawNs == 0L || now - lastDrawNs >= interval) {
-                        lastDrawNs = now
-                        invalidate()
-                    }
+                    // Full display refresh rate — earlier ~36 FPS throttle felt choppy.
+                    invalidate()
                 }
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
@@ -348,11 +339,11 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
 
     private fun buildSparks(): List<Spark> {
         val rnd = Random(System.nanoTime())
-        return List(10) {
+        return List(6) {
             Spark(
                 angle = rnd.nextFloat() * (Math.PI * 2).toFloat(),
-                dist = 18f + rnd.nextFloat() * 70f,
-                size = 1.6f + rnd.nextFloat() * 3.4f,
+                dist = 18f + rnd.nextFloat() * 60f,
+                size = 1.6f + rnd.nextFloat() * 3.0f,
                 phase = rnd.nextFloat(),
                 cool = rnd.nextBoolean()
             )
@@ -414,36 +405,23 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         }
 
         val save = canvas.save()
-        if (seatT > 0.25f) {
-            // Face-on seat: skip Camera/Matrix3D once the shield is almost docked.
-            canvas.translate(x, y)
-            canvas.scale(pathScale, pathScale)
-            ensureBodyShader(40, 1f)
-            drawSplitShield(canvas, 0f, bodyAlpha)
-        } else {
-            camera.save()
-            camera.setLocation(0f, 0f, -8f)
-            camera.rotateY(rotY)
-            camera.getMatrix(matrix3d)
-            camera.restore()
-            matrix3d.preScale(pathScale, pathScale)
-            matrix3d.postTranslate(x, y)
-            canvas.concat(matrix3d)
-
-            val face = kotlin.math.abs(cos(rotY * deg2rad))
-            val faceShade = 0.72f + 0.28f * face
-            val shadeKey = (faceShade * 40f).toInt()
-            ensureBodyShader(shadeKey, faceShade)
-
-            if (pose.shieldSplit > 0.02f) {
-                drawChassis(canvas, pose.shieldSplit, bodyAlpha)
-                drawClockwork(canvas, pose.gearAngle, pose.shieldSplit * bodyAlpha)
-                if (pose.hottabychReveal > 0.02f) {
-                    drawEmergingHottabych(canvas, pose.hottabychReveal, pose.hottabychWink, bodyAlpha)
-                }
-            }
-            drawSplitShield(canvas, pose.shieldSplit, bodyAlpha)
+        canvas.translate(x, y)
+        canvas.scale(pathScale, pathScale)
+        // Cheap yaw: canvas.rotate instead of Camera/Matrix3D (was a big mid-flight cost).
+        if (seatT <= 0.25f && kotlin.math.abs(rotY) > 0.5f) {
+            canvas.rotate(rotY * 0.35f)
         }
+        val faceShade = if (seatT > 0.25f) 1f else 0.78f + 0.22f * kotlin.math.abs(cos(rotY * deg2rad))
+        ensureBodyShader((faceShade * 40f).toInt(), faceShade)
+
+        if (pose.shieldSplit > 0.02f && seatT <= 0.25f) {
+            drawChassis(canvas, pose.shieldSplit, bodyAlpha)
+            drawClockwork(canvas, pose.gearAngle, pose.shieldSplit * bodyAlpha)
+            if (pose.hottabychReveal > 0.02f) {
+                drawEmergingHottabych(canvas, pose.hottabychReveal, pose.hottabychWink, bodyAlpha)
+            }
+        }
+        drawSplitShield(canvas, if (seatT > 0.25f) 0f else pose.shieldSplit, bodyAlpha)
 
         canvas.restoreToCount(save)
 
@@ -500,30 +478,18 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         }
 
         val ga = (open * (0.55f + pulse * 0.35f)).coerceIn(0f, 1f)
-        // Soft wells behind gears.
+        // Soft wells behind gears — fewer wells = cheaper frames.
         corePaint.shader = null
         corePaint.color = (0x00050A12) or (((180 * open).toInt().coerceIn(0, 255)) shl 24)
-        canvas.drawCircle(originX - r * 0.32f, originY - r * 0.06f, r * 0.12f, corePaint)
-        canvas.drawCircle(originX + r * 0.32f, originY - r * 0.06f, r * 0.12f, corePaint)
-        canvas.drawCircle(originX - r * 0.28f, originY + r * 0.16f, r * 0.11f, corePaint)
-        canvas.drawCircle(originX + r * 0.28f, originY + r * 0.16f, r * 0.11f, corePaint)
-        canvas.drawCircle(originX, originY + r * 0.32f, r * 0.10f, corePaint)
-        canvas.drawCircle(originX - r * 0.10f, originY - r * 0.30f, r * 0.09f, corePaint)
-        canvas.drawCircle(originX + r * 0.10f, originY - r * 0.30f, r * 0.09f, corePaint)
+        canvas.drawCircle(originX - r * 0.30f, originY, r * 0.11f, corePaint)
+        canvas.drawCircle(originX + r * 0.30f, originY, r * 0.11f, corePaint)
+        canvas.drawCircle(originX, originY + r * 0.28f, r * 0.10f, corePaint)
 
         val gs = dens * 0.9f
-        dockGear(gearPathB, originX - r * 0.10f, originY - r * 0.30f, gearSpin * 1.5f, gs * 0.68f, 0xFFA8DCFF.toInt(), ga * 0.9f)
-        dockGear(gearPathB, originX + r * 0.10f, originY - r * 0.30f, -gearSpin * 1.5f, gs * 0.68f, 0xFFA8DCFF.toInt(), ga * 0.9f)
-        dockGear(gearPathC, originX, originY - r * 0.24f, gearSpin * 2.1f, gs * 0.52f, 0xFF7AB8FF.toInt(), ga * 0.85f)
-        dockGear(gearPathA, originX - r * 0.32f, originY - r * 0.06f, gearSpin, gs * 1.05f, 0xFF7AB8FF.toInt(), ga)
-        dockGear(gearPathB, originX - r * 0.24f, originY + r * 0.06f, -gearSpin * 1.35f, gs * 0.7f, 0xFF9AD0FF.toInt(), ga * 0.9f)
-        dockGear(gearPathA, originX + r * 0.32f, originY - r * 0.06f, -gearSpin, gs * 1.05f, 0xFF7AB8FF.toInt(), ga)
-        dockGear(gearPathB, originX + r * 0.24f, originY + r * 0.06f, gearSpin * 1.35f, gs * 0.7f, 0xFF9AD0FF.toInt(), ga * 0.9f)
-        dockGear(gearPathB, originX - r * 0.28f, originY + r * 0.16f, gearSpin * 1.7f, gs * 0.75f, 0xFFA8DCFF.toInt(), ga * 0.9f)
-        dockGear(gearPathB, originX + r * 0.28f, originY + r * 0.16f, -gearSpin * 1.7f, gs * 0.75f, 0xFFA8DCFF.toInt(), ga * 0.9f)
-        dockGear(gearPathC, originX - r * 0.16f, originY + r * 0.28f, -gearSpin * 2f, gs * 0.55f, 0xFF6AA8FF.toInt(), ga * 0.85f)
-        dockGear(gearPathC, originX + r * 0.16f, originY + r * 0.28f, gearSpin * 2f, gs * 0.55f, 0xFF6AA8FF.toInt(), ga * 0.85f)
-        dockGear(gearPathA, originX, originY + r * 0.32f, gearSpin * 1.15f, gs * 0.8f, 0xFF9AD0FF.toInt(), ga * 0.85f)
+        dockGear(gearPathA, originX - r * 0.30f, originY, gearSpin, gs, 0xFF7AB8FF.toInt(), ga)
+        dockGear(gearPathA, originX + r * 0.30f, originY, -gearSpin, gs, 0xFF7AB8FF.toInt(), ga)
+        dockGear(gearPathB, originX, originY + r * 0.28f, gearSpin * 1.3f, gs * 0.78f, 0xFF9AD0FF.toInt(), ga * 0.9f)
+        dockGear(gearPathC, originX, originY - r * 0.22f, -gearSpin * 1.6f, gs * 0.55f, 0xFFA8DCFF.toInt(), ga * 0.85f)
 
         // Empty shield cradle — silhouette the returning shield seats into.
         val socketScale = (r * 0.72f) / 108f
@@ -626,27 +592,17 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
             canvas.drawCircle(cx, cy, radius * 0.92f, ringPaint)
         }
 
-        // Center bay — main clockwork.
-        well(0f, 4f, 30f)
-        gear(gearPathA, -9f, 3f, gearAngle, 0xFF8EC8FF.toInt(), 1.35f)
-        gear(gearPathB, 14f, -8f, -gearAngle * 1.35f, 0xFFB8F0FF.toInt(), 1.15f)
-        gear(gearPathC, 5f, 16f, gearAngle * 1.8f, 0xFF6AA8FF.toInt(), 1.05f)
-        gear(gearPathC, -13f, 16f, -gearAngle * 1.1f, 0xFF9AD0FF.toInt(), 0.9f)
+        // Center bay — three gears max (was denser; hurt mid-flight FPS).
+        well(0f, 4f, 28f)
+        gear(gearPathA, -8f, 3f, gearAngle, 0xFF8EC8FF.toInt(), 1.3f)
+        gear(gearPathB, 12f, -6f, -gearAngle * 1.35f, 0xFFB8F0FF.toInt(), 1.1f)
+        gear(gearPathC, 2f, 15f, gearAngle * 1.8f, 0xFF6AA8FF.toInt(), 1.0f)
         corePaint.shader = null
         corePaint.color = (0x00E8FBFF) or ((a * 0.95f).toInt().coerceIn(0, 255) shl 24)
-        canvas.drawCircle(0f, 4f, 3.6f, corePaint)
+        canvas.drawCircle(0f, 4f, 3.4f, corePaint)
         ringPaint.strokeWidth = 1.5f
         ringPaint.color = (0x00B8F5FF) or ((a * 0.75f).toInt().coerceIn(0, 255) shl 24)
-        canvas.drawCircle(0f, 4f, 9f, ringPaint)
-
-        // Upper side bays — peek through cheek cuts.
-        well(-27f, -24f, 14f)
-        gear(gearPathB, -28f, -25f, gearAngle * 1.6f, 0xFFA8DCFF.toInt(), 0.92f)
-        gear(gearPathC, -21f, -16f, -gearAngle * 2f, 0xFF7AB8FF.toInt(), 0.72f)
-
-        well(27f, -24f, 14f)
-        gear(gearPathB, 28f, -25f, -gearAngle * 1.6f, 0xFFA8DCFF.toInt(), 0.92f)
-        gear(gearPathC, 21f, -16f, gearAngle * 2f, 0xFF7AB8FF.toInt(), 0.72f)
+        canvas.drawCircle(0f, 4f, 8.5f, ringPaint)
     }
 
     /** Tech chassis under the armor — drawn before gears so they sit in the wells. */
@@ -668,22 +624,14 @@ class ShieldLaunchOverlayView @JvmOverloads constructor(
         ringPaint.strokeWidth = 1.15f
         ringPaint.alpha = ((130 * split) * bodyAlpha).toInt().coerceIn(0, 255)
         canvas.drawLine(-18f, -10f, 18f, -10f, ringPaint)
-        canvas.drawLine(0f, -30f, 0f, 30f, ringPaint)
-        canvas.drawLine(-22f, 14f, 22f, 14f, ringPaint)
-        canvas.drawLine(-16f, -10f, -6f, 14f, ringPaint)
-        canvas.drawLine(16f, -10f, 6f, 14f, ringPaint)
+        canvas.drawLine(0f, -28f, 0f, 28f, ringPaint)
 
         corePaint.shader = null
         corePaint.color = (0x00D6F0FF) or
             (((140 * split * bodyAlpha).toInt().coerceIn(0, 255)) shl 24)
-        for (i in 0..4) {
-            val y = lerp(-26f, 26f, i / 4f)
-            canvas.drawCircle(0f, y, 1.55f, corePaint)
-        }
-        canvas.drawCircle(-14f, -8f, 1.4f, corePaint)
-        canvas.drawCircle(14f, -8f, 1.4f, corePaint)
-        canvas.drawCircle(-10f, 12f, 1.4f, corePaint)
-        canvas.drawCircle(10f, 12f, 1.4f, corePaint)
+        canvas.drawCircle(0f, -12f, 1.5f, corePaint)
+        canvas.drawCircle(0f, 4f, 1.5f, corePaint)
+        canvas.drawCircle(0f, 18f, 1.5f, corePaint)
     }
 
     private fun drawEmergingHottabych(canvas: Canvas, reveal: Float, wink: Float, bodyAlpha: Float) {

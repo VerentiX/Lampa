@@ -179,7 +179,7 @@ private class LampaPowerPlatformView(
                 }
                 root.postDelayed({
                     if (!shieldSeated || !animate) return@postDelayed
-                    LampaCeremony.frost()?.freezeFrom(button)
+                    // Frost overlay stays disabled (LampaCeremony) — skip freeze work.
                 }, 200L)
             },
             onEnd = {
