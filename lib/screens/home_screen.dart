@@ -975,16 +975,21 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _controller,
         subController: _subController,
         childBuilder: (state) {
-          final startEnabled =
-              !state.busy && !state.tunnelUp && state.configRaw.isNotEmpty;
-          final stopEnabled = !state.busy && state.tunnelUp;
+          // Do not silently disable the branded power button merely because
+          // configRaw has not been built yet. A freshly imported subscription
+          // can already show its nodes while the derived sing-box config is
+          // still empty. The start path below repairs that state before asking
+          // Android for VPN consent.
+          final toggleEnabled = !state.busy && !_subController.busy;
           return LampaHome(
             state: state,
             subscriptions: _subController.entries,
             busy: _subController.busy,
-            onToggle: state.tunnelUp
-                ? (stopEnabled ? _controller.stop : null)
-                : (startEnabled ? _startWithAutoRefresh : null),
+            onToggle: !toggleEnabled
+                ? null
+                : state.tunnelUp
+                ? _controller.stop
+                : _startWithAutoRefresh,
             onImportText: (text) async {
               await _subController.addFromInput(text);
               await _rebuildConfig();
@@ -1292,6 +1297,43 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _startWithAutoRefresh() async {
+    // A subscription import and config generation are separate async stages.
+    // Previously build() set onToggle=null while configRaw was empty, making
+    // the large Lampa button look clickable but preventing startVPN() — and,
+    // consequently, VpnService.prepare() — from ever being called. Repair the
+    // derived config on demand before entering the native consent flow.
+    if (_controller.state.configRaw.trim().isEmpty) {
+      try {
+        await Future.wait([_subController.rehydrationDone, _controllerInit]);
+        if (!mounted) return;
+        final rebuilt = await _rebuildConfig(silent: true);
+        if (!mounted) return;
+        if (!rebuilt || _controller.state.configRaw.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Не удалось подготовить VPN-конфигурацию. '
+                'Обновите подписку и попробуйте ещё раз.',
+              ),
+            ),
+          );
+          return;
+        }
+      } catch (e) {
+        if (!mounted) return;
+        AppLog.I.warning('Power-button config recovery failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Не удалось подготовить VPN-конфигурацию. '
+              'Проверьте подписку и повторите попытку.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     // Если уже активен VPN другого приложения — наш старт молча отзовёт его
     // (onRevoke). Спросим подтверждение перед перебиванием чужого туннеля.
     // Только для ручного старта из UI; фоновые точки (tile/automation) не трогаем.
