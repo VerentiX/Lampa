@@ -10,6 +10,18 @@ import java.util.Properties
 import com.android.build.OutputFile
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
+// Android Studio invokes Gradle directly and may leave flutter.versionName /
+// flutter.versionCode stale in android/local.properties.  Treat pubspec.yaml
+// as the single source of truth so Studio and `flutter build` produce the same
+// version without requiring `flutter clean` or a command-line build first.
+val pubspecVersionLine = rootProject.file("../pubspec.yaml")
+    .useLines { lines -> lines.firstOrNull { it.trimStart().startsWith("version:") } }
+    ?.substringAfter("version:")
+    ?.trim()
+    ?: error("Missing version in pubspec.yaml")
+val pubspecVersionName = pubspecVersionLine.substringBefore("+").trim()
+val pubspecVersionCode = pubspecVersionLine.substringAfter("+", "1").trim().toInt()
+
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
@@ -68,8 +80,8 @@ android {
         // См. ARCHITECTURE.md → Supported platforms и docs/spec/tasks/233.
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = pubspecVersionCode
+        versionName = pubspecVersionName
 
         // ABI filter (build-size optimization). Flutter `--target-platform`
         // влияет только на свой engine + Dart AOT; нативные .so из Maven
@@ -183,4 +195,19 @@ dependencies {
 
 flutter {
     source = "../.."
+}
+
+// Android Studio's APK notification historically opened android/app/release,
+// while AGP/Flutter writes the real artifacts under build/app/outputs. Keep
+// the familiar folder as an exact mirror after every Studio release build so
+// it can never show APKs from the previous app version.
+val syncStudioReleaseApks by tasks.registering(Sync::class) {
+    from(layout.buildDirectory.dir("outputs/apk/release"))
+    into(layout.projectDirectory.dir("release"))
+}
+
+tasks.configureEach {
+    if (name == "assembleRelease") {
+        finalizedBy(syncStudioReleaseApks)
+    }
 }
