@@ -157,9 +157,7 @@ class SubscriptionController extends ChangeNotifier {
       if (list is! SubscriptionServers) continue;
       final id = list.identity;
       if (id == null || !isStaleLampaSubscriptionUa(id.userAgent)) continue;
-      entry._replaceList(
-        list.copyWith(identity: id.copyWith(userAgent: '')),
-      );
+      entry._replaceList(list.copyWith(identity: id.copyWith(userAgent: '')));
       changed = true;
       AppLog.I.info(
         'Cleared stale per-sub UA for ${entry.displayName}: ${id.userAgent}',
@@ -193,7 +191,8 @@ class SubscriptionController extends ChangeNotifier {
       if (l is SubscriptionServers &&
           l.lastUpdateStatus == UpdateStatus.inProgress) {
         _entries[i]._replaceList(
-            l.copyWith(lastUpdateStatus: UpdateStatus.failed));
+          l.copyWith(lastUpdateStatus: UpdateStatus.failed),
+        );
         swept = true;
       }
     }
@@ -236,8 +235,9 @@ class SubscriptionController extends ChangeNotifier {
             // stale lastNodeCount. Логируем с подсказкой, что в кеше.
             final hint = diagnoseEmptyParse(body);
             AppLog.I.warning(
-                'Re-hydrate: cached body parsed to 0 nodes for '
-                '${maskSubscriptionUrl(list.url)}${hint != null ? ' — $hint' : ''}');
+              'Re-hydrate: cached body parsed to 0 nodes for '
+              '${maskSubscriptionUrl(list.url)}${hint != null ? ' — $hint' : ''}',
+            );
             continue;
           }
           // §101 — guard после await'ов: entry могли удалить; list мог
@@ -256,13 +256,18 @@ class SubscriptionController extends ChangeNotifier {
           entry._replaceList(next);
           final detours = nodes.where((n) => n.chained != null).length;
           entry.nodeCount = nodes.length;
-          entry.status =
-              SubStatusNodes(nodes.length, detours: detours, cached: true);
+          entry.status = SubStatusNodes(
+            nodes.length,
+            detours: detours,
+            cached: true,
+          );
           AppLog.I.info(
-              'Re-hydrated ${nodes.length} nodes from cache: ${maskSubscriptionUrl(list.url)}');
+            'Re-hydrated ${nodes.length} nodes from cache: ${maskSubscriptionUrl(list.url)}',
+          );
         } catch (e) {
           AppLog.I.warning(
-              'Re-hydrate failed for ${maskSubscriptionUrl(list.url)}: ${humanizeError(e).renderEn()}');
+            'Re-hydrate failed for ${maskSubscriptionUrl(list.url)}: ${humanizeError(e).renderEn()}',
+          );
         }
       }
       notifyListeners();
@@ -279,7 +284,9 @@ class SubscriptionController extends ChangeNotifier {
   /// хеш считаем ПОСЛЕ применения — выключение и роутинг работают с итоговым
   /// видом узла, как его увидит билдер.
   ({Set<String> disable, Set<String> enable}) _applyRulesToNodes(
-      List<NodeSpec> nodes, List<ImportRule> rules) {
+    List<NodeSpec> nodes,
+    List<ImportRule> rules,
+  ) {
     // §307 — правила НЕ инкрементальны: каждый прогон стартует с чистого
     // узла (движок читает `emitRaw`), поэтому прошлый патч всегда сбрасываем.
     // Сегодня узлы в обоих call-site'ах свежераспарсенные и сброс — no-op,
@@ -288,7 +295,9 @@ class SubscriptionController extends ChangeNotifier {
       n.patchedJson = null;
       n.ruleTrail = const [];
     }
-    if (rules.isEmpty || nodes.isEmpty) return (disable: const {}, enable: const {});
+    if (rules.isEmpty || nodes.isEmpty) {
+      return (disable: const {}, enable: const {});
+    }
     final result = applyImportRules(nodes, rules);
     if (result.isEmpty) return (disable: const {}, enable: const {});
 
@@ -332,9 +341,12 @@ class SubscriptionController extends ChangeNotifier {
     for (var i = 0; i < nodes.length; i++) {
       final a = nodes[i];
       if (a is! AutoSelectSpec || a.tagSynonyms.isEmpty) continue;
-      nodes[i] = a.copyWith(tagSynonyms: {
-        for (final e in a.tagSynonyms.entries) e.key: moved[e.value] ?? e.value,
-      });
+      nodes[i] = a.copyWith(
+        tagSynonyms: {
+          for (final e in a.tagSynonyms.entries)
+            e.key: moved[e.value] ?? e.value,
+        },
+      );
     }
   }
 
@@ -349,11 +361,13 @@ class SubscriptionController extends ChangeNotifier {
     notifyListeners();
     try {
       final tagged = _autoEmoji(us);
-      _entries
-          .add(SubscriptionEntry(list: tagged, nodeCount: tagged.nodes.length));
+      _entries.add(
+        SubscriptionEntry(list: tagged, nodeCount: tagged.nodes.length),
+      );
       await _persist();
       AppLog.I.info(
-          'addUserServer: ${us.id} ${us.name} (${us.nodes.length} node)');
+        'addUserServer: ${us.id} ${us.name} (${us.nodes.length} node)',
+      );
     } catch (e) {
       _lastError = humanizeError(e);
     } finally {
@@ -393,8 +407,9 @@ class SubscriptionController extends ChangeNotifier {
     notifyListeners();
     final warp = client ?? WarpClient();
     try {
-      WarpAccount? account =
-          (reuse && !forceNew) ? await SettingsStorage.getWarpAccount() : null;
+      WarpAccount? account = (reuse && !forceNew)
+          ? await SettingsStorage.getWarpAccount()
+          : null;
 
       // Если есть кеш, но юзер ввёл новый license, а аккаунт ещё free —
       // регистрируем заново, чтобы привязать (PATCH к чужой сессии хрупок).
@@ -406,22 +421,25 @@ class SubscriptionController extends ChangeNotifier {
       // §143 — резолвим masquerade-домен (пустой id → рандом из пула) и
       // рандомный endpoint (только при обфускации + дефолтном endpoint).
       final picker = await WarpEndpointPicker.load();
-      final resolvedParams = (quicParams.sni.trim().isEmpty &&
-              picker.randomSni().isNotEmpty)
+      final resolvedParams =
+          (quicParams.sni.trim().isEmpty && picker.randomSni().isNotEmpty)
           ? quicParams.copyWith(sni: picker.randomSni())
           : quicParams;
       // §138 — endpoint, который реально должен попасть в узел. Юзер вписал
       // свой (не дефолт) → он; обфускация+дефолт → рандомный §136; иначе дефолт.
       final userPicked = endpoint != WarpAccount.defaultEndpoint;
       // §305 — v6-endpoint только если в системе включён IPv6 (иначе мёртв).
-      final allowV6 = (await SettingsStorage.getVar('ipv6_enabled', 'false'))
-              .toLowerCase() ==
+      final allowV6 =
+          (await SettingsStorage.getVar(
+            'ipv6_enabled',
+            'false',
+          )).toLowerCase() ==
           'true';
       final resolvedEndpoint = userPicked
           ? endpoint
           : (obfuscate
-              ? (picker.randomEndpoint(allowV6: allowV6) ?? endpoint)
-              : endpoint);
+                ? (picker.randomEndpoint(allowV6: allowV6) ?? endpoint)
+                : endpoint);
 
       account ??= await warp.register(
         licenseKey: licenseKey,
@@ -437,8 +455,7 @@ class SubscriptionController extends ChangeNotifier {
       // свежий он или из кеша. Корень бага: при закешированном аккаунте
       // register() минуется (account ??=), и выбранный в Advanced endpoint
       // игнорировался → в узел шёл старый endpoint из кеша.
-      if (resolvedEndpoint != account.endpoint &&
-          (userPicked || obfuscate)) {
+      if (resolvedEndpoint != account.endpoint && (userPicked || obfuscate)) {
         account = account.copyWith(endpoint: resolvedEndpoint);
       }
 
@@ -453,7 +470,11 @@ class SubscriptionController extends ChangeNotifier {
       // юзер сам решает нужны ли дубли (разные endpoint/SNI/обфускация). Тег с
       // коллизия-суффиксом (` 2`/` 3`), эмодзи внутри тега (☁️ plain / ⛈️ AWG).
       final tag = _uniqueWarpTag(
-          WarpAccount.nodeTag(warpPlus: account.warpPlus, hasAwg: account.awg != null));
+        WarpAccount.nodeTag(
+          warpPlus: account.warpPlus,
+          hasAwg: account.awg != null,
+        ),
+      );
 
       // §142 — reserved (client_id): дефолт по галке. Обфускация → false
       // (привязка к устройству режется), plain → true (§025 своя регистрация).
@@ -462,11 +483,19 @@ class SubscriptionController extends ChangeNotifier {
       // §126 — обфусцированный узел добавляем через `.conf` (i1 ~1700b удобнее
       // провести INI-путём); plain WARP — короткий URI как раньше.
       if (account.awg != null) {
-        await _addWarpObfuscated(account, tag, withReserved,
-            persistentKeepalive: persistentKeepalive);
+        await _addWarpObfuscated(
+          account,
+          tag,
+          withReserved,
+          persistentKeepalive: persistentKeepalive,
+        );
       } else {
-        await _addWarpPlain(account, tag, withReserved,
-            persistentKeepalive: persistentKeepalive);
+        await _addWarpPlain(
+          account,
+          tag,
+          withReserved,
+          persistentKeepalive: persistentKeepalive,
+        );
       }
       if (_lastError != null) return null;
       return account;
@@ -563,8 +592,11 @@ class SubscriptionController extends ChangeNotifier {
   }
 
   /// §130 — MASQUE-узел через `masque://` URI (аналог [_addWarpPlain]).
-  Future<void> _addMasqueNode(MasqueAccount account, String tag,
-      {String vhttp = 'h3'}) async {
+  Future<void> _addMasqueNode(
+    MasqueAccount account,
+    String tag, {
+    String vhttp = 'h3',
+  }) async {
     final spec = parseMasqueUri(account.toMasqueUri(vhttp: vhttp));
     if (spec == null) {
       _lastError = const ErrMsg(ErrKey.invalidMasqueConfig);
@@ -589,20 +621,22 @@ class SubscriptionController extends ChangeNotifier {
       keepAlive: spec.keepAlive,
       warnings: spec.warnings,
     );
-    _entries.add(SubscriptionEntry(
-      list: UserServer(
-        id: newUuidV4(),
-        name: '',
-        enabled: true,
-        tagPrefix: '',
-        detourPolicy: DetourPolicy.defaults,
-        origin: UserSource.paste,
-        createdAt: DateTime.now(),
-        rawBody: tagged.toUri(),
-        nodes: [tagged],
+    _entries.add(
+      SubscriptionEntry(
+        list: UserServer(
+          id: newUuidV4(),
+          name: '',
+          enabled: true,
+          tagPrefix: '',
+          detourPolicy: DetourPolicy.defaults,
+          origin: UserSource.paste,
+          createdAt: DateTime.now(),
+          rawBody: tagged.toUri(),
+          nodes: [tagged],
+        ),
+        nodeCount: 1,
       ),
-      nodeCount: 1,
-    ));
+    );
     await _persist();
   }
 
@@ -612,7 +646,10 @@ class SubscriptionController extends ChangeNotifier {
   /// (свежий register уже проставил — тогда no-op; кешированный аккаунт без
   /// awg или с awg — перегенерируем, чтобы применить актуальный шаблон).
   WarpAccount _syncWarpObfuscation(
-      WarpAccount account, bool obfuscate, QuicParams quicParams) {
+    WarpAccount account,
+    bool obfuscate,
+    QuicParams quicParams,
+  ) {
     if (!obfuscate) {
       return account.awg == null ? account : account.copyWith(clearAwg: true);
     }
@@ -628,7 +665,7 @@ class SubscriptionController extends ChangeNotifier {
           for (final n in (e.list as UserServer).nodes) n.tag,
     };
     if (!existing.contains(base)) return base;
-    for (var i = 2;; i++) {
+    for (var i = 2; ; i++) {
       final candidate = '$base $i';
       if (!existing.contains(candidate)) return candidate;
     }
@@ -638,11 +675,17 @@ class SubscriptionController extends ChangeNotifier {
   /// (несёт AWG; reserved по [includeReserved]). [tag] (с эмодзи ⛈️ +
   /// коллизия-суффикс) ставится принудительно (INI-путь иначе дал бы `WireGuard`).
   Future<void> _addWarpObfuscated(
-      WarpAccount account, String tag, bool includeReserved,
-      {int? persistentKeepalive}) async {
-    final spec = parseWireguardIni(account.toWireguardConf(
+    WarpAccount account,
+    String tag,
+    bool includeReserved, {
+    int? persistentKeepalive,
+  }) async {
+    final spec = parseWireguardIni(
+      account.toWireguardConf(
         includeReserved: includeReserved,
-        persistentKeepalive: persistentKeepalive));
+        persistentKeepalive: persistentKeepalive,
+      ),
+    );
     if (spec == null) {
       _lastError = const ErrMsg(ErrKey.invalidWarpConfigObfuscated);
       return;
@@ -663,31 +706,39 @@ class SubscriptionController extends ChangeNotifier {
       warnings: spec.warnings,
     );
     // rawBody = toUri() (с тегом во фрагменте) → тег переживает reload/re-parse.
-    _entries.add(SubscriptionEntry(
-      list: UserServer(
-        id: newUuidV4(),
-        name: '',
-        enabled: true,
-        tagPrefix: '',
-        detourPolicy: DetourPolicy.defaults,
-        origin: UserSource.paste,
-        createdAt: DateTime.now(),
-        rawBody: tagged.toUri(),
-        nodes: [tagged],
+    _entries.add(
+      SubscriptionEntry(
+        list: UserServer(
+          id: newUuidV4(),
+          name: '',
+          enabled: true,
+          tagPrefix: '',
+          detourPolicy: DetourPolicy.defaults,
+          origin: UserSource.paste,
+          createdAt: DateTime.now(),
+          rawBody: tagged.toUri(),
+          nodes: [tagged],
+        ),
+        nodeCount: 1,
       ),
-      nodeCount: 1,
-    ));
+    );
     await _persist();
   }
 
   /// §137/§142 — plain WARP-узел (без AWG) через короткий URI с [tag].
   /// reserved по [includeReserved].
   Future<void> _addWarpPlain(
-      WarpAccount account, String tag, bool includeReserved,
-      {int? persistentKeepalive}) async {
-    final spec = parseWireguardUri(account.toWireguardUri(
+    WarpAccount account,
+    String tag,
+    bool includeReserved, {
+    int? persistentKeepalive,
+  }) async {
+    final spec = parseWireguardUri(
+      account.toWireguardUri(
         includeReserved: includeReserved,
-        persistentKeepalive: persistentKeepalive));
+        persistentKeepalive: persistentKeepalive,
+      ),
+    );
     if (spec == null) {
       _lastError = const ErrMsg(ErrKey.invalidWarpConfig);
       return;
@@ -707,20 +758,22 @@ class SubscriptionController extends ChangeNotifier {
       awg: spec.awg,
       warnings: spec.warnings,
     );
-    _entries.add(SubscriptionEntry(
-      list: UserServer(
-        id: newUuidV4(),
-        name: '',
-        enabled: true,
-        tagPrefix: '',
-        detourPolicy: DetourPolicy.defaults,
-        origin: UserSource.paste,
-        createdAt: DateTime.now(),
-        rawBody: tagged.toUri(),
-        nodes: [tagged],
+    _entries.add(
+      SubscriptionEntry(
+        list: UserServer(
+          id: newUuidV4(),
+          name: '',
+          enabled: true,
+          tagPrefix: '',
+          detourPolicy: DetourPolicy.defaults,
+          origin: UserSource.paste,
+          createdAt: DateTime.now(),
+          rawBody: tagged.toUri(),
+          nodes: [tagged],
+        ),
+        nodeCount: 1,
       ),
-      nodeCount: 1,
-    ));
+    );
     await _persist();
   }
 
@@ -734,7 +787,9 @@ class SubscriptionController extends ChangeNotifier {
     if (newRaw == us.rawBody) return us;
     try {
       final newNodes = parseAll(decode(newRaw));
-      return newNodes.isEmpty ? us : us.copyWith(rawBody: newRaw, nodes: newNodes);
+      return newNodes.isEmpty
+          ? us
+          : us.copyWith(rawBody: newRaw, nodes: newNodes);
     } catch (_) {
       return us;
     }
@@ -747,8 +802,11 @@ class SubscriptionController extends ChangeNotifier {
   /// потерялось бы при ре-парсе после рестарта.
   /// [origin] — откуда приехала строка. Дефолт `paste` сохраняет поведение
   /// всех существующих вызовов; §375 (QR-сканер) передаёт `UserSource.qr`.
-  Future<void> addFromInput(String input,
-      {String? nameHint, UserSource origin = UserSource.paste}) async {
+  Future<void> addFromInput(
+    String input, {
+    String? nameHint,
+    UserSource origin = UserSource.paste,
+  }) async {
     final trimmed = input.trim();
     if (trimmed.isEmpty) return;
 
@@ -760,8 +818,8 @@ class SubscriptionController extends ChangeNotifier {
     final inputPreview = isSubscriptionUrl(trimmed)
         ? maskSubscriptionUrl(trimmed)
         : (trimmed.startsWith('{') || trimmed.startsWith('['))
-            ? '<JSON outbound>'
-            : '<proxy link>';
+        ? '<JSON outbound>'
+        : '<proxy link>';
     AppLog.I.info('addFromInput: $inputPreview');
 
     try {
@@ -783,19 +841,22 @@ class SubscriptionController extends ChangeNotifier {
           _lastError = const ErrMsg(ErrKey.invalidWireguardConfig);
           return;
         }
-        final wgServer = _autoEmoji(UserServer(
-          id: newUuidV4(),
-          name: '',
-          enabled: true,
-          tagPrefix: '',
-          detourPolicy: DetourPolicy.defaults,
-          origin: origin,
-          createdAt: DateTime.now(),
-          rawBody: spec.rawUri,
-          nodes: [spec],
-        ));
-        _entries.add(SubscriptionEntry(
-            list: wgServer, nodeCount: wgServer.nodes.length));
+        final wgServer = _autoEmoji(
+          UserServer(
+            id: newUuidV4(),
+            name: '',
+            enabled: true,
+            tagPrefix: '',
+            detourPolicy: DetourPolicy.defaults,
+            origin: origin,
+            createdAt: DateTime.now(),
+            rawBody: spec.rawUri,
+            nodes: [spec],
+          ),
+        );
+        _entries.add(
+          SubscriptionEntry(list: wgServer, nodeCount: wgServer.nodes.length),
+        );
         await _persist();
       } else if (isAmneziaVpnLink(trimmed)) {
         // §110 — Amnezia vpn://: один UserServer на ссылку, нод может быть
@@ -806,19 +867,22 @@ class SubscriptionController extends ChangeNotifier {
           _lastError = const ErrMsg(ErrKey.noWgInVpnLink);
           return;
         }
-        final vpnServer = _autoEmoji(UserServer(
-          id: newUuidV4(),
-          name: '',
-          enabled: true,
-          tagPrefix: '',
-          detourPolicy: DetourPolicy.defaults,
-          origin: origin,
-          createdAt: DateTime.now(),
-          rawBody: trimmed,
-          nodes: nodes,
-        ));
-        _entries.add(SubscriptionEntry(
-            list: vpnServer, nodeCount: vpnServer.nodes.length));
+        final vpnServer = _autoEmoji(
+          UserServer(
+            id: newUuidV4(),
+            name: '',
+            enabled: true,
+            tagPrefix: '',
+            detourPolicy: DetourPolicy.defaults,
+            origin: origin,
+            createdAt: DateTime.now(),
+            rawBody: trimmed,
+            nodes: nodes,
+          ),
+        );
+        _entries.add(
+          SubscriptionEntry(list: vpnServer, nodeCount: vpnServer.nodes.length),
+        );
         await _persist();
       } else if (isDirectLink(trimmed)) {
         final spec = parseUri(trimmed);
@@ -826,19 +890,22 @@ class SubscriptionController extends ChangeNotifier {
           _lastError = const ErrMsg(ErrKey.couldNotParseDirectLink);
           return;
         }
-        final dlServer = _autoEmoji(UserServer(
-          id: newUuidV4(),
-          name: '',
-          enabled: true,
-          tagPrefix: '',
-          detourPolicy: DetourPolicy.defaults,
-          origin: origin,
-          createdAt: DateTime.now(),
-          rawBody: trimmed,
-          nodes: [spec],
-        ));
-        _entries.add(SubscriptionEntry(
-            list: dlServer, nodeCount: dlServer.nodes.length));
+        final dlServer = _autoEmoji(
+          UserServer(
+            id: newUuidV4(),
+            name: '',
+            enabled: true,
+            tagPrefix: '',
+            detourPolicy: DetourPolicy.defaults,
+            origin: origin,
+            createdAt: DateTime.now(),
+            rawBody: trimmed,
+            nodes: [spec],
+          ),
+        );
+        _entries.add(
+          SubscriptionEntry(list: dlServer, nodeCount: dlServer.nodes.length),
+        );
         await _persist();
       } else {
         switch (await _addJsonNodes(trimmed, origin: origin)) {
@@ -870,8 +937,10 @@ class SubscriptionController extends ChangeNotifier {
   /// Одна запись, а не N: раньше массив outbound'ов раскладывался по одной
   /// записи на элемент («v1 behavior parity»). Вставленный файл — один
   /// источник, и обновляться он должен целиком.
-  Future<_JsonAdd> _addJsonNodes(String text,
-      {UserSource origin = UserSource.paste}) async {
+  Future<_JsonAdd> _addJsonNodes(
+    String text, {
+    UserSource origin = UserSource.paste,
+  }) async {
     final decoded = decode(text);
     if (decoded is! JsonConfig) return _JsonAdd.notJson;
     switch (decoded.flavor) {
@@ -921,19 +990,22 @@ class SubscriptionController extends ChangeNotifier {
       return _JsonAdd.added;
     }
 
-    final jsonServer = _autoEmoji(UserServer(
-      id: newUuidV4(),
-      name: '',
-      enabled: true,
-      tagPrefix: '',
-      detourPolicy: DetourPolicy.defaults,
-      origin: origin,
-      createdAt: DateTime.now(),
-      rawBody: text,
-      nodes: nodes,
-    ));
-    _entries.add(SubscriptionEntry(
-        list: jsonServer, nodeCount: jsonServer.nodes.length));
+    final jsonServer = _autoEmoji(
+      UserServer(
+        id: newUuidV4(),
+        name: '',
+        enabled: true,
+        tagPrefix: '',
+        detourPolicy: DetourPolicy.defaults,
+        origin: origin,
+        createdAt: DateTime.now(),
+        rawBody: text,
+        nodes: nodes,
+      ),
+    );
+    _entries.add(
+      SubscriptionEntry(list: jsonServer, nodeCount: jsonServer.nodes.length),
+    );
     return _JsonAdd.added;
   }
 
@@ -984,14 +1056,17 @@ class SubscriptionController extends ChangeNotifier {
       lastUpdated: DateTime.now(),
       lastUpdateStatus: UpdateStatus.ok,
       lastNodeCount: result.nodes.length,
-      updateIntervalHours: -1, // §129 — файловая: никогда не обновлять авто (-1)
+      updateIntervalHours:
+          -1, // §129 — файловая: никогда не обновлять авто (-1)
       nodes: result.nodes,
     );
     final entry = SubscriptionEntry(list: list, nodeCount: result.nodes.length);
     _entries.add(entry);
     await _persist();
     notifyListeners();
-    AppLog.I.info('Added file subscription "$name": ${result.nodes.length} nodes');
+    AppLog.I.info(
+      'Added file subscription "$name": ${result.nodes.length} nodes',
+    );
     return true;
   }
 
@@ -1001,8 +1076,11 @@ class SubscriptionController extends ChangeNotifier {
   /// кэш/url/ноды сбрасываются ТОЛЬКО после успеха нового (> 0 нод), иначе
   /// полный откат — подписка остаётся на прежнем источнике, юзер не остаётся без
   /// нод.** Возвращает пустую строку при успехе, текст ошибки — при откате.
-  Future<UiMsg?> updateSourceAt(int index,
-      {String? httpUrl, String? fileBody}) async {
+  Future<UiMsg?> updateSourceAt(
+    int index, {
+    String? httpUrl,
+    String? fileBody,
+  }) async {
     if (index < 0 || index >= _entries.length) {
       return const ErrMsg(ErrKey.invalidSubscription);
     }
@@ -1023,8 +1101,10 @@ class SubscriptionController extends ChangeNotifier {
       // §289 — сохраняем per-subscription идентичность при смене источника.
       final result = toFile
           ? await parseFromSource(InlineSource(fileBody))
-          : await parseFromSource(UrlSource(newUrl, identity: old.identity),
-              client: httpClientForTesting);
+          : await parseFromSource(
+              UrlSource(newUrl, identity: old.identity),
+              client: httpClientForTesting,
+            );
 
       // 2. Успех нового = > 0 нод. Иначе — полный откат (§101-инвариант).
       if (result.nodes.isEmpty) {
@@ -1058,7 +1138,8 @@ class SubscriptionController extends ChangeNotifier {
       await _persist();
       notifyListeners();
       AppLog.I.info(
-          'Source changed → ${maskSubscriptionUrl(newUrl)}: ${result.nodes.length} nodes');
+        'Source changed → ${maskSubscriptionUrl(newUrl)}: ${result.nodes.length} nodes',
+      );
       return null;
     } catch (e) {
       AppLog.I.warning('updateSourceAt failed (kept current): $e');
@@ -1124,31 +1205,33 @@ class SubscriptionController extends ChangeNotifier {
   /// Одиночный сервер из [member] (для ungroup / delete-с-выносом).
   /// §237 — личный detour члена переезжает в overrideDetour одиночного.
   static UserServer _memberToUserServer(FolderMember m) => UserServer(
-        id: newUuidV4(),
-        name: '',
-        enabled: m.enabled,
-        tagPrefix: '',
-        detourPolicy: m.detour.isEmpty
-            ? DetourPolicy.defaults
-            : DetourPolicy.defaults.copyWith(overrideDetour: m.detour),
-        origin: UserSource.manual,
-        createdAt: DateTime.now(),
-        rawBody: m.raw,
-        nodes: [if (m.node != null) m.node!],
-      );
+    id: newUuidV4(),
+    name: '',
+    enabled: m.enabled,
+    tagPrefix: '',
+    detourPolicy: m.detour.isEmpty
+        ? DetourPolicy.defaults
+        : DetourPolicy.defaults.copyWith(overrideDetour: m.detour),
+    origin: UserSource.manual,
+    createdAt: DateTime.now(),
+    rawBody: m.raw,
+    nodes: [if (m.node != null) m.node!],
+  );
 
   /// Создать пустую папку.
   Future<void> addFolder(String name) async {
-    _entries.add(SubscriptionEntry(
-      list: FolderServers(
-        id: newUuidV4(),
-        name: name,
-        enabled: true,
-        tagPrefix: '',
-        detourPolicy: DetourPolicy.defaults,
+    _entries.add(
+      SubscriptionEntry(
+        list: FolderServers(
+          id: newUuidV4(),
+          name: name,
+          enabled: true,
+          tagPrefix: '',
+          detourPolicy: DetourPolicy.defaults,
+        ),
+        nodeCount: 0,
       ),
-      nodeCount: 0,
-    ));
+    );
     await _persist();
     notifyListeners();
     AppLog.I.info('Folder created: $name');
@@ -1206,7 +1289,7 @@ class SubscriptionController extends ChangeNotifier {
     // §305 — v6-кандидаты только если в системе включён IPv6 (иначе мёртвы).
     final allowV6 =
         (await SettingsStorage.getVar('ipv6_enabled', 'false')).toLowerCase() ==
-            'true';
+        'true';
     final gen = CandidateGenerator(pool, rng: rng, allowV6: allowV6);
     final seedUris = _candidatesToUris(gen.seed(seedCount), builder);
     if (seedUris.isEmpty) return null;
@@ -1215,7 +1298,10 @@ class SubscriptionController extends ChangeNotifier {
 
   Future<WarpAccount?> _tryRegisterWarp(WarpClient warp, String now) async {
     try {
-      final acc = await warp.register(endpoint: WarpAccount.defaultEndpoint, nowIso8601: now);
+      final acc = await warp.register(
+        endpoint: WarpAccount.defaultEndpoint,
+        nowIso8601: now,
+      );
       await SettingsStorage.setWarpAccount(acc);
       return acc;
     } catch (e) {
@@ -1259,19 +1345,21 @@ class SubscriptionController extends ChangeNotifier {
   Future<int> _recreateScanFolder(List<String> uris) async {
     final old = _scanFolderIndex();
     if (old != null) _entries.removeAt(old);
-    _entries.add(SubscriptionEntry(
-      list: FolderServers(
-        id: newUuidV4(),
-        name: kScanFolderName,
-        enabled: true,
-        tagPrefix: '',
-        detourPolicy: DetourPolicy.defaults,
-        members: [for (final u in uris) FolderMember(raw: u)],
-        pingUrl: kScanProbeUrl,
-        pingTimeoutMs: 3000,
+    _entries.add(
+      SubscriptionEntry(
+        list: FolderServers(
+          id: newUuidV4(),
+          name: kScanFolderName,
+          enabled: true,
+          tagPrefix: '',
+          detourPolicy: DetourPolicy.defaults,
+          members: [for (final u in uris) FolderMember(raw: u)],
+          pingUrl: kScanProbeUrl,
+          pingTimeoutMs: 3000,
+        ),
+        nodeCount: uris.length,
       ),
-      nodeCount: uris.length,
-    ));
+    );
     await _persist();
     notifyListeners();
     return _entries.length - 1;
@@ -1296,15 +1384,19 @@ class SubscriptionController extends ChangeNotifier {
     await _persist();
     notifyListeners();
     AppLog.I.info(
-        'Folder deleted: ${list.name} (${keepServers ? 'servers kept' : 'servers removed'})');
+      'Folder deleted: ${list.name} (${keepServers ? 'servers kept' : 'servers removed'})',
+    );
   }
 
   /// Добавить вход (paste / тело файла) в папку. Вход сплитится на членов
   /// 1:1 по нодам. [nameFallback] — имя для нод без собственного (имя
   /// файла); коллизии внутри вызова получают суффикс « 2», « 3»…
   /// Возвращает '' при успехе, иначе текст ошибки.
-  Future<UiMsg?> addMembersToFolder(int index, String input,
-      {String? nameFallback}) async {
+  Future<UiMsg?> addMembersToFolder(
+    int index,
+    String input, {
+    String? nameFallback,
+  }) async {
     if (index < 0 || index >= _entries.length) {
       return const ErrMsg(ErrKey.folderNotFound);
     }
@@ -1357,8 +1449,10 @@ class SubscriptionController extends ChangeNotifier {
     _busy = true;
     notifyListeners();
     try {
-      final result = await parseFromSource(UrlSource(url.trim()),
-          client: httpClientForTesting);
+      final result = await parseFromSource(
+        UrlSource(url.trim()),
+        client: httpClientForTesting,
+      );
       if (result.nodes.isEmpty) {
         return const ErrMsg(ErrKey.noServersFoundAtUrl);
       }
@@ -1367,13 +1461,15 @@ class SubscriptionController extends ChangeNotifier {
       if (cur is! FolderServers || !_entries.contains(entry)) {
         return const ErrMsg(ErrKey.folderNotFound);
       }
-      final added =
-          result.nodes.map((n) => FolderMember(raw: memberRawFor(n))).toList();
+      final added = result.nodes
+          .map((n) => FolderMember(raw: memberRawFor(n)))
+          .toList();
       entry._replaceList(cur.copyWith(members: [...cur.members, ...added]));
       entry.nodeCount = entry.list.nodes.length;
       await _persist();
       AppLog.I.info(
-          'Folder "${cur.name}": +${added.length} servers (URL snapshot)');
+        'Folder "${cur.name}": +${added.length} servers (URL snapshot)',
+      );
       return null;
     } catch (e) {
       return humanizeError(e);
@@ -1412,8 +1508,10 @@ class SubscriptionController extends ChangeNotifier {
   /// следующем refresh поставят свои отметки заново (правило — источник
   /// истины). disable: merge поверх существующих — TTL-отметки временно
   /// отсутствующих узлов не теряются, GC доделает своё.
-  Future<void> setAllSubscriptionNodes(int index,
-      {required bool enabled}) async {
+  Future<void> setAllSubscriptionNodes(
+    int index, {
+    required bool enabled,
+  }) async {
     if (index < 0 || index >= _entries.length) return;
     final entry = _entries[index];
     final list = entry.list;
@@ -1440,8 +1538,11 @@ class SubscriptionController extends ChangeNotifier {
   /// ручных §283 (identity-хеш, TTL + GC на успешном refresh); ENABLE-правила
   /// фильтров при следующем refresh снимут их (§332 — правило источник
   /// истины), экран предупреждает до действия.
-  Future<void> setSubscriptionNodesEnabled(int index, Iterable<NodeSpec> nodes,
-      {required bool enabled}) async {
+  Future<void> setSubscriptionNodesEnabled(
+    int index,
+    Iterable<NodeSpec> nodes, {
+    required bool enabled,
+  }) async {
     if (index < 0 || index >= _entries.length) return;
     final entry = _entries[index];
     final list = entry.list;
@@ -1469,8 +1570,9 @@ class SubscriptionController extends ChangeNotifier {
     if (folder is! FolderServers) return;
     if (memberIndex < 0 || memberIndex >= folder.members.length) return;
     final members = [...folder.members];
-    members[memberIndex] =
-        members[memberIndex].copyWith(enabled: !members[memberIndex].enabled);
+    members[memberIndex] = members[memberIndex].copyWith(
+      enabled: !members[memberIndex].enabled,
+    );
     entry._replaceList(folder.copyWith(members: members));
     entry.nodeCount = entry.list.nodes.length;
     await _persist();
@@ -1480,7 +1582,10 @@ class SubscriptionController extends ChangeNotifier {
   /// Правка raw-фрагмента члена. Новый raw обязан парситься ≥1 ноды, иначе
   /// откат (возврат текста ошибки, старый член не трогается).
   Future<UiMsg?> updateMemberAt(
-      int index, int memberIndex, String newRaw) async {
+    int index,
+    int memberIndex,
+    String newRaw,
+  ) async {
     if (index < 0 || index >= _entries.length) {
       return const ErrMsg(ErrKey.folderNotFound);
     }
@@ -1548,7 +1653,9 @@ class SubscriptionController extends ChangeNotifier {
     entry.nodeCount = entry.list.nodes.length;
     final us = _memberToUserServer(member);
     _entries.insert(
-        index + 1, SubscriptionEntry(list: us, nodeCount: us.nodes.length));
+      index + 1,
+      SubscriptionEntry(list: us, nodeCount: us.nodes.length),
+    );
     await _persist();
     notifyListeners();
   }
@@ -1558,7 +1665,10 @@ class SubscriptionController extends ChangeNotifier {
   /// внешней — display-form (§080). Отклоняет self и ребро, замыкающее
   /// интра-цикл. Возвращает '' при успехе, иначе текст ошибки.
   Future<UiMsg?> setMemberDetour(
-      int index, int memberIndex, String detour) async {
+    int index,
+    int memberIndex,
+    String detour,
+  ) async {
     if (index < 0 || index >= _entries.length) {
       return const ErrMsg(ErrKey.folderNotFound);
     }
@@ -1611,7 +1721,10 @@ class SubscriptionController extends ChangeNotifier {
 
   /// §236 — массовый toggle членов (Disable slower than N ms и т.п.).
   Future<void> setMembersEnabled(
-      int index, Set<int> memberIndexes, bool enabled) async {
+    int index,
+    Set<int> memberIndexes,
+    bool enabled,
+  ) async {
     if (index < 0 || index >= _entries.length) return;
     final entry = _entries[index];
     final folder = entry.list;
@@ -1658,15 +1771,19 @@ class SubscriptionController extends ChangeNotifier {
     if (order.length != folder.members.length) return;
     if (order.toSet().length != order.length) return;
     if (order.any((i) => i < 0 || i >= folder.members.length)) return;
-    entry._replaceList(folder.copyWith(
-        members: [for (final i in order) folder.members[i]]));
+    entry._replaceList(
+      folder.copyWith(members: [for (final i in order) folder.members[i]]),
+    );
     await _persist();
     notifyListeners();
   }
 
   /// Перенести члена из папки [fromIndex] в папку [toIndex].
   Future<UiMsg?> moveMemberToFolder(
-      int fromIndex, int memberIndex, int toIndex) async {
+    int fromIndex,
+    int memberIndex,
+    int toIndex,
+  ) async {
     if (fromIndex < 0 || fromIndex >= _entries.length) {
       return const ErrMsg(ErrKey.folderNotFound);
     }
@@ -1723,25 +1840,27 @@ class SubscriptionController extends ChangeNotifier {
         // Битый/пустой raw — переносим как есть (член будет виден и правим).
         ? [
             FolderMember(
-                raw: server.rawBody,
-                enabled: server.enabled,
-                detour: personalDetour),
+              raw: server.rawBody,
+              enabled: server.enabled,
+              detour: personalDetour,
+            ),
           ]
         : [
             for (final n in server.nodes)
               FolderMember(
-                  raw: memberRawFor(n),
-                  enabled: server.enabled,
-                  detour: personalDetour),
+                raw: memberRawFor(n),
+                enabled: server.enabled,
+                detour: personalDetour,
+              ),
           ];
     folderEntry._replaceList(
-        folder.copyWith(members: [...folder.members, ...added]));
+      folder.copyWith(members: [...folder.members, ...added]),
+    );
     folderEntry.nodeCount = folderEntry.list.nodes.length;
     _entries.remove(serverEntry);
     await _persist();
     notifyListeners();
-    AppLog.I.info(
-        'Server moved to folder "${folder.name}" (+${added.length})');
+    AppLog.I.info('Server moved to folder "${folder.name}" (+${added.length})');
     return null;
   }
 
@@ -1755,14 +1874,16 @@ class SubscriptionController extends ChangeNotifier {
   /// запускала бы пересборку (а в режиме reload — и попытку reload) на каждом
   /// часовом тике. Ручной путь (⟳ → `_fetchEntryByRef`) гейтится тем же
   /// `sameComposition` внутри.
-  Future<bool> refreshEntry(SubscriptionEntry entry,
-      {UpdateTrigger? trigger}) =>
-      _fetchEntryByRef(entry, trigger: trigger);
+  Future<bool> refreshEntry(
+    SubscriptionEntry entry, {
+    UpdateTrigger? trigger,
+  }) => _fetchEntryByRef(entry, trigger: trigger);
 
   Future<void> toggleAt(int index) async {
     if (index < 0 || index >= _entries.length) return;
     _entries[index]._replaceList(
-        _toggleEnabled(_entries[index].list, !_entries[index].enabled));
+      _toggleEnabled(_entries[index].list, !_entries[index].enabled),
+    );
     await _persist();
     notifyListeners();
   }
@@ -1817,11 +1938,15 @@ class SubscriptionController extends ChangeNotifier {
         configDirty = false;
       } else {
         AppLog.I.info(
-            '§360: entries changed during rebuild — configDirty kept');
+          '§360: entries changed during rebuild — configDirty kept',
+        );
       }
       return config;
     } catch (e) {
       _lastError = humanizeError(e);
+      AppLog.I.error(
+        'generateConfig failed: ${_lastError?.renderEn() ?? e.toString()}',
+      );
       // §254 — сохранить структуру fatal-issues для UI (DetourCycle → sheet).
       if (e is FatalValidationException) _lastFatalIssues = e.issues;
       return null;
@@ -1864,7 +1989,9 @@ class SubscriptionController extends ChangeNotifier {
 
     final outs = (result.config['outbounds'] as List?)?.length ?? 0;
     final eps = (result.config['endpoints'] as List?)?.length ?? 0;
-    AppLog.I.info('Config built: $outs outbounds + $eps endpoints, ${lists.length} lists');
+    AppLog.I.info(
+      'Config built: $outs outbounds + $eps endpoints, ${lists.length} lists',
+    );
     for (final w in result.emitWarnings) {
       AppLog.I.warning(w);
     }
@@ -1908,8 +2035,10 @@ class SubscriptionController extends ChangeNotifier {
   /// §331 (ревью) — возвращает «состав узлов изменился»: true ТОЛЬКО при
   /// успешном фетче с новым составом (см. `_compositionKey`). Скипы, фейлы и
   /// «тот же список» → false. Контракт для гейта реакции в AutoUpdater.
-  Future<bool> _fetchEntryByRef(SubscriptionEntry entry,
-      {UpdateTrigger? trigger}) async {
+  Future<bool> _fetchEntryByRef(
+    SubscriptionEntry entry, {
+    UpdateTrigger? trigger,
+  }) async {
     final list = entry.list;
     if (list is! SubscriptionServers) return false;
 
@@ -1930,7 +2059,8 @@ class SubscriptionController extends ChangeNotifier {
     // inProgress.
     if (list.lastUpdateStatus == UpdateStatus.inProgress) {
       AppLog.I.debug(
-          'Fetch skipped — already inProgress: ${maskSubscriptionUrl(list.url)}');
+        'Fetch skipped — already inProgress: ${maskSubscriptionUrl(list.url)}',
+      );
       return false;
     }
 
@@ -1953,10 +2083,12 @@ class SubscriptionController extends ChangeNotifier {
       // после fetch'а — с гонкой: реальная правка юзера, сделанная ВО ВРЕМЯ
       // fetch'а (сетевые секунды), затиралась восстановлением. Не поднимаем —
       // и восстанавливать нечего, гонка исчезает по построению.
-      entry._replaceList(list.copyWith(
-        lastUpdateAttempt: attemptAt,
-        lastUpdateStatus: UpdateStatus.inProgress,
-      ));
+      entry._replaceList(
+        list.copyWith(
+          lastUpdateAttempt: attemptAt,
+          lastUpdateStatus: UpdateStatus.inProgress,
+        ),
+      );
       await _persist(keepDirtyFlag: true);
       notifyListeners();
 
@@ -1964,11 +2096,13 @@ class SubscriptionController extends ChangeNotifier {
       // §302 — import-rules здесь не участвуют: применяются ниже, к уже
       // разобранным узлам.
       final result = await parseFromSource(
-          UrlSource(list.url, identity: list.identity),
-          client: httpClientForTesting);
+        UrlSource(list.url, identity: list.identity),
+        client: httpClientForTesting,
+      );
       AppLog.I.info(
-          'Fetched ${result.nodes.length} nodes from $shortUrl'
-          '${result.meta?.profileTitle == null ? "" : " (title: ${result.meta!.profileTitle})"}');
+        'Fetched ${result.nodes.length} nodes from $shortUrl'
+        '${result.meta?.profileTitle == null ? "" : " (title: ${result.meta!.profileTitle})"}',
+      );
 
       // §101 (R4) — HTTP 200, но тело распарсилось в 0 нод (HTML-заглушка,
       // DDoS-challenge, чужой формат). Это failure, не success: НЕ затираем
@@ -1978,16 +2112,19 @@ class SubscriptionController extends ChangeNotifier {
         final hint = diagnoseEmptyParse(result.rawBody);
         if (hint != null) AppLog.I.warning('Parse hint: $hint');
         AppLog.I.warning(
-            'Fetch returned 0 nodes for $shortUrl — keeping previous state');
+          'Fetch returned 0 nodes for $shortUrl — keeping previous state',
+        );
         entry.status = entry.nodeCount > 0
             ? SubStatusUpdateFailed(entry.nodeCount, zeroParsed: true)
             : SubStatusZeroNodes(hint);
         final current = entry.list as SubscriptionServers;
-        entry._replaceList(current.copyWith(
-          lastUpdateAttempt: attemptAt,
-          lastUpdateStatus: UpdateStatus.failed,
-          consecutiveFails: current.consecutiveFails + 1,
-        ));
+        entry._replaceList(
+          current.copyWith(
+            lastUpdateAttempt: attemptAt,
+            lastUpdateStatus: UpdateStatus.failed,
+            consecutiveFails: current.consecutiveFails + 1,
+          ),
+        );
         try {
           // §331 (ревью) — keepDirtyFlag: фейл-статус — метаданные, состав
           // узлов не менялся. Без гейта каждый неудачный фетч (провайдер лёг,
@@ -1999,12 +2136,15 @@ class SubscriptionController extends ChangeNotifier {
           // consecutiveFails инкрементится повторно и haptic дублируется.
           // In-memory состояние уже корректно; теряем только запись на диск.
           AppLog.I.error(
-              'Persist failed after empty fetch: ${humanizeError(e).renderEn()}');
+            'Persist failed after empty fetch: ${humanizeError(e).renderEn()}',
+          );
         }
         if (trigger == UpdateTrigger.manual) HapticService.I.onFetchError();
         // §047 — outgoing subscription event (gated, default OFF, throttled).
-        AutomationEventEmitter.I
-            .emitSubRefreshFailed(shortUrl, '0 nodes parsed');
+        AutomationEventEmitter.I.emitSubRefreshFailed(
+          shortUrl,
+          '0 nodes parsed',
+        );
         notifyListeners();
         return false;
       }
@@ -2012,12 +2152,18 @@ class SubscriptionController extends ChangeNotifier {
       // Кешируем сырое тело и заголовки на диск для офлайн-реактивации после
       // перезапуска (см. `_rehydrateFromCache`) и для Source-вкладки (fallback).
       // §219 — трекаем future для детерминированного await в тестах.
-      final saveFuture = HttpCache.save(list.url, result.rawBody, result.headers);
+      final saveFuture = HttpCache.save(
+        list.url,
+        result.rawBody,
+        result.headers,
+      );
       lastCacheSaveForTesting = saveFuture;
       unawaited(saveFuture);
       final warnNodes = result.nodes.where((n) => n.warnings.isNotEmpty).length;
       if (warnNodes > 0) {
-        AppLog.I.warning('$warnNodes nodes with warnings (XHTTP fallback etc.)');
+        AppLog.I.warning(
+          '$warnNodes nodes with warnings (XHTTP fallback etc.)',
+        );
       }
       entry.nodeCount = result.nodes.length;
       final detours = result.nodes.where((n) => n.chained != null).length;
@@ -2042,14 +2188,13 @@ class SubscriptionController extends ChangeNotifier {
         break;
       }
       final incomingTitle = result.meta?.profileTitle?.trim() ?? '';
-      final nextName = remark ??
+      final nextName =
+          remark ??
           (incomingTitle.isNotEmpty
               ? incomingTitle
               : (current.name.isNotEmpty ? current.name : incomingTitle));
       if (nextName.isNotEmpty) {
-        unawaited(
-          SettingsStorage.setVar('lampa_connection_remark', nextName),
-        );
+        unawaited(SettingsStorage.setVar('lampa_connection_remark', nextName));
       }
 
       // §129 — семантика интервала:
@@ -2058,7 +2203,8 @@ class SubscriptionController extends ChangeNotifier {
       //        заголовок ПРИНИМАЕМ (станет реальным числом → авто по нему);
       //   >0 = обновлять раз в N часов (сервер тоже может переопределить).
       final nextInterval = current.updateIntervalHours < 0
-          ? current.updateIntervalHours // -1: жёстко, сервер не переубедит
+          ? current
+                .updateIntervalHours // -1: жёстко, сервер не переубедит
           : (result.meta?.updateIntervalHours ?? current.updateIntervalHours);
       // §302 — import-rules применяем к УЖЕ РАЗОБРАННЫМ узлам (их emit-JSON):
       // REPLACE патчит узел (`patchedJson` → уходит в конфиг), DISABLE даёт
@@ -2070,8 +2216,10 @@ class SubscriptionController extends ChangeNotifier {
       // `nodeIdentityHash` того же инстанса), поэтому пометка гарантированно
       // совпадает с узлом, который билдер увидит.
       final ruleNow = DateTime.now();
-      final ruleMarks =
-          _applyRulesToNodes(result.nodes, current.activeImportRules);
+      final ruleMarks = _applyRulesToNodes(
+        result.nodes,
+        current.activeImportRules,
+      );
 
       // §283 — GC отметок disable ТОЛЬКО здесь (успешный сетевой fetch =
       // единственный сигнал «нода ушла из подписки»; failed fetch и
@@ -2080,13 +2228,13 @@ class SubscriptionController extends ChangeNotifier {
       // чистить.
       final baseDisabled =
           current.disabledHashes.isEmpty && ruleMarks.disable.isEmpty
-              ? current.disabledHashes
-              : gcDisabledHashes(
-                  current.disabledHashes,
-                  {for (final n in result.nodes) nodeIdentityHash(n)},
-                  updateIntervalHours: nextInterval,
-                  now: ruleNow,
-                );
+          ? current.disabledHashes
+          : gcDisabledHashes(
+              current.disabledHashes,
+              {for (final n in result.nodes) nodeIdentityHash(n)},
+              updateIntervalHours: nextInterval,
+              now: ruleNow,
+            );
       // §332 — итог правил поверх GC (правило > GC): ENABLE снимает отметки
       // (включая ручные §283), DISABLE ставит.
       final nextDisabled = applyRuleMarks(
@@ -2118,7 +2266,8 @@ class SubscriptionController extends ChangeNotifier {
       // (§283: снятая/поставленная отметка меняет, что эмитится, при том же
       // списке узлов). Всё прочее в подписке — метаданные, конфиг от них не
       // зависит.
-      final sameComposition = _compositionKey(current.nodes, current.disabledHashes.keys) ==
+      final sameComposition =
+          _compositionKey(current.nodes, current.disabledHashes.keys) ==
           _compositionKey(result.nodes, nextDisabled.keys);
       // §349 — выключенная подписка в конфиг не эмитится (билдер пропускает
       // `!list.enabled`): её состав на конфиг не влияет, флаг не поднимаем.
@@ -2145,7 +2294,9 @@ class SubscriptionController extends ChangeNotifier {
       // агрегируется за весь проход (один reload на N подписок, а не N).
       // §349 — и реакция только для включённой: выключенная не в конфиге,
       // пересборка/reload ей нечего применять (зеркало гейта auto_updater).
-      if (trigger == UpdateTrigger.manual && !sameComposition && affectsConfig) {
+      if (trigger == UpdateTrigger.manual &&
+          !sameComposition &&
+          affectsConfig) {
         switch (next.onUpdateAction) {
           case SubscriptionOnUpdateAction.reload:
             await _autoUpdater?.applyReaction(reload: true);
@@ -2175,11 +2326,13 @@ class SubscriptionController extends ChangeNotifier {
       // обновляем — чтобы AutoUpdater видел fail и считал в `_failCounts`.
       final current = entry.list;
       if (current is SubscriptionServers) {
-        entry._replaceList(current.copyWith(
-          lastUpdateAttempt: attemptAt,
-          lastUpdateStatus: UpdateStatus.failed,
-          consecutiveFails: current.consecutiveFails + 1,
-        ));
+        entry._replaceList(
+          current.copyWith(
+            lastUpdateAttempt: attemptAt,
+            lastUpdateStatus: UpdateStatus.failed,
+            consecutiveFails: current.consecutiveFails + 1,
+          ),
+        );
         // §331 (ревью) — keepDirtyFlag: как в empty-parse ветке выше — фейл
         // пишет только метаданные, синяя плашка от него не законна.
         await _persist(keepDirtyFlag: true);
@@ -2187,8 +2340,10 @@ class SubscriptionController extends ChangeNotifier {
       if (trigger == UpdateTrigger.manual) HapticService.I.onFetchError();
       // §047 — outgoing subscription event (gated, default OFF; throttled
       // 1/min на sub_id в эмиттере, чтобы network-outage не заспамил Tasker).
-      AutomationEventEmitter.I
-          .emitSubRefreshFailed(shortUrl, humanizeError(e).renderEn());
+      AutomationEventEmitter.I.emitSubRefreshFailed(
+        shortUrl,
+        humanizeError(e).renderEn(),
+      );
     }
     notifyListeners();
     return compositionChanged;
@@ -2246,8 +2401,7 @@ class SubscriptionController extends ChangeNotifier {
   static String compositionKeyForTesting(
     List<NodeSpec> nodes,
     Iterable<String> disabledHashes,
-  ) =>
-      _compositionKey(nodes, disabledHashes);
+  ) => _compositionKey(nodes, disabledHashes);
 
   static String _compositionKey(
     List<NodeSpec> nodes,
@@ -2325,14 +2479,14 @@ class SubscriptionController extends ChangeNotifier {
   }
 
   ServerList _renameList(ServerList l, String name) => switch (l) {
-        SubscriptionServers() => l.copyWith(name: name),
-        UserServer() => l.copyWith(name: name),
-        FolderServers() => l.copyWith(name: name),
-      };
+    SubscriptionServers() => l.copyWith(name: name),
+    UserServer() => l.copyWith(name: name),
+    FolderServers() => l.copyWith(name: name),
+  };
 
   ServerList _toggleEnabled(ServerList l, bool enabled) => switch (l) {
-        SubscriptionServers() => l.copyWith(enabled: enabled),
-        UserServer() => l.copyWith(enabled: enabled),
-        FolderServers() => l.copyWith(enabled: enabled),
-      };
+    SubscriptionServers() => l.copyWith(enabled: enabled),
+    UserServer() => l.copyWith(enabled: enabled),
+    FolderServers() => l.copyWith(enabled: enabled),
+  };
 }

@@ -1304,16 +1304,29 @@ class _HomeScreenState extends State<HomeScreen>
     // derived config on demand before entering the native consent flow.
     if (_controller.state.configRaw.trim().isEmpty) {
       try {
+        // A lock created through the hidden Debug API can survive an update
+        // from a debug build. Release Lampa hides the control that disables
+        // it, leaving the branded UI permanently unable to generate config.
+        // A production build must never inherit that unreachable debug state.
+        if (kReleaseMode && await SettingsStorage.getConfigLockedForDebug()) {
+          await SettingsStorage.setConfigLockedForDebug(false);
+          AppLog.I.warning(
+            'Cleared stale config_locked_for_debug before release VPN start',
+          );
+        }
         await Future.wait([_subController.rehydrationDone, _controllerInit]);
         if (!mounted) return;
         final rebuilt = await _rebuildConfig(silent: true);
         if (!mounted) return;
         if (!rebuilt || _controller.state.configRaw.trim().isEmpty) {
+          final detail = _subController.lastError?.renderEn().trim() ?? '';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Не удалось подготовить VPN-конфигурацию. '
-                'Обновите подписку и попробуйте ещё раз.',
+                detail.isEmpty
+                    ? 'Не удалось подготовить VPN-конфигурацию. '
+                          'Обновите подписку и попробуйте ещё раз.'
+                    : 'Не удалось подготовить VPN-конфигурацию: $detail',
               ),
             ),
           );
