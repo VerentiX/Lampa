@@ -572,6 +572,13 @@ Future<BuildResult> buildConfig({
     );
   }
 
+  // Dynamic priority routing is substituted independently from the legacy
+  // BuildSettings.routeFinal path above.  Validate its final value only after
+  // all channel outbounds/endpoints have been emitted, so a stale value cannot
+  // prevent VPN permission/startup entirely.
+  final healedRouteFinal = healDanglingRouteFinal(config);
+  if (healedRouteFinal != null) emitWarnings.add(healedRouteFinal);
+
   final validation = validateConfig(config);
   return BuildResult(
     configJson: jsonEncode(config),
