@@ -197,13 +197,13 @@ flutter {
     source = "../.."
 }
 
-// Android Studio's APK notification historically opened android/app/release,
-// while AGP/Flutter writes the real artifacts under build/app/outputs. Keep
-// the familiar folder as an exact mirror after every Studio release build so
-// it can never show APKs from the previous app version.
+// AGP owns android/app/release for its APK-listing redirect task, so writing
+// our copies there causes Gradle 8.14 implicit-dependency validation errors.
+// Mirror release artifacts into a separate top-level folder instead. This is
+// safe for Android Studio builds and keeps all ABI APKs easy to find.
 val syncStudioReleaseApks by tasks.registering(Sync::class) {
     from(layout.buildDirectory.dir("outputs/apk/release"))
-    into(layout.projectDirectory.dir("release"))
+    into(rootProject.layout.projectDirectory.dir("../release-apks"))
 }
 
 tasks.configureEach {
