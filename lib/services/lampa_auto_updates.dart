@@ -61,13 +61,16 @@ class LampaAutoUpdates {
       await SettingsStorage.setLampaLastAppCheck(now);
       if (info == null) return;
       AppLog.I.info('LampaAutoUpdates: app ${info.version} — auto download');
-      LampaDownloadProgress.I.start(
-        kind: LampaDownloadKind.app,
-        label: 'Приложение ${info.version}',
-      );
       final apk = await LampaAppUpdate.I.download(
         info,
         onProgress: (got, total) {
+          if (!LampaDownloadProgress.I.isKindActive(LampaDownloadKind.app)) {
+            LampaDownloadProgress.I.start(
+              kind: LampaDownloadKind.app,
+              label: 'Приложение ${info.version}',
+              total: total,
+            );
+          }
           LampaDownloadProgress.I.update(
             kind: LampaDownloadKind.app,
             received: got,

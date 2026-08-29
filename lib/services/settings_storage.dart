@@ -110,6 +110,7 @@ class SettingsStorage {
     'resolve_strategy',
     'priority_p5_plus_active',
     'priority_proxy_outbound',
+    'priority_route_final',
     'tun_address',
     'tun_address6',
     'tun_auto_route',
@@ -219,6 +220,8 @@ class SettingsStorage {
     'lampa_last_app_check_at',
     'lampa_user_rules',
     'lampa_last_run_version',
+    // Debug-only preview of the consumer (Lampa) surface on owner builds.
+    'debug_lampa_ui',
   };
 
   /// Полный allowlist для подключей `vars` при импорте: кодовые флаги ∪ все
@@ -749,6 +752,16 @@ class SettingsStorage {
 
   static Future<void> setLampaLastAppCheck(DateTime dt) =>
       setVar('lampa_last_app_check_at', dt.toUtc().toIso8601String());
+
+  /// Debug builds: show Lampa consumer UI. Default **on** so cold start matches
+  /// release; persist so the DEBUG toggle survives restarts.
+  static Future<bool> getDebugLampaUi() async {
+    final raw = await getVar('debug_lampa_ui', '1');
+    return raw != '0' && raw.toLowerCase() != 'false';
+  }
+
+  static Future<void> setDebugLampaUi(bool enabled) =>
+      setVar('debug_lampa_ui', enabled ? '1' : '0');
 
   static Future<int> _lampaHours(String key, int fallback) async {
     final raw = int.tryParse(await getVar(key, '$fallback'));

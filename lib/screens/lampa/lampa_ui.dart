@@ -1,18 +1,33 @@
 import 'package:flutter/material.dart';
 
-/// Shared Lampa / Хаттабыч surface colors for dialogs & snackbars.
+/// Lampa / Хаттабыч UI — фильм «Хоттабыч» (2006) + старый рунет:
+/// чёрный фон, CRT-зелень, синие ссылки, оранж Mail.ru, monospace.
 abstract final class LampaUi {
-  static const bg = Color(0xff1a1208);
-  static const bgDeep = Color(0xff0a0603);
-  static const accent = Color(0xffffab40);
-  static const accentDeep = Color(0xffff8f00);
-  static const onSurface = Color(0xe6ffffff);
-  static const muted = Color(0x99ffffff);
-  static const border = Color(0x33ffffff);
+  static const bg = Color(0xff0c1020);
+  static const bgDeep = Color(0xff05070e);
+  static const accent = Color(0xffff9900); // mail.ru / banner orange
+  static const accentDeep = Color(0xffe07800);
+  static const link = Color(0xff66b3ff); // hyperlink on dark
+  static const crt = Color(0xff33ff66); // CRT / dial-up online
+  static const crtDim = Color(0xff1a9944);
+  static const warn = Color(0xffff4466);
+  static const onSurface = Color(0xffe8f0ff);
+  static const muted = Color(0x99a8b8d0);
+  static const border = Color(0x6644aaff);
+  static const panel = Color(0xff101828);
+
+  static const mono = TextStyle(
+    fontFamily: 'monospace',
+    letterSpacing: 0.4,
+    height: 1.25,
+  );
 
   static ButtonStyle get primaryButton => FilledButton.styleFrom(
-        backgroundColor: accentDeep,
+        backgroundColor: accent,
         foregroundColor: bgDeep,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
       );
 
   static Future<T?> dialog<T>({
@@ -25,24 +40,24 @@ abstract final class LampaUi {
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierColor: const Color(0x99000000),
+      barrierColor: const Color(0xcc000000),
       builder: (ctx) => AlertDialog(
         backgroundColor: bg,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: border),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: border, width: 2),
         ),
         title: DefaultTextStyle(
-          style: const TextStyle(
-            color: onSurface,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+          style: mono.copyWith(
+            color: accent,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
           child: title,
         ),
         content: DefaultTextStyle(
-          style: const TextStyle(color: muted, fontSize: 14, height: 1.35),
+          style: mono.copyWith(color: muted, fontSize: 13),
           child: content,
         ),
         actions: actions,
@@ -51,12 +66,15 @@ abstract final class LampaUi {
   }
 
   static SnackBar snack(String message, {SnackBarAction? action}) => SnackBar(
-        content: Text(message, style: const TextStyle(color: onSurface)),
+        content: Text(
+          message,
+          style: mono.copyWith(color: onSurface, fontSize: 13),
+        ),
         backgroundColor: bg,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: border),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: border, width: 1),
         ),
         action: action,
       );

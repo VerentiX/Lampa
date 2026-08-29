@@ -39,7 +39,7 @@ class StartupWizard {
     // 4. §395 — автопроверка обновлений: спрашиваем явно, потому что фоновый
     //    запрос к github.com без согласия — anti-feature Tracking у F-Droid.
     //    Lampa: GitHub-чекер выключен (`UpdateChecker.enabled`), обновления
-    //    приложения идут через hattabych.ru — промпт не нужен.
+    //    приложения идут через VerentiX/Lampa GitHub Releases — промпт не нужен.
     if (!UpdateChecker.enabled) return;
     if (!context.mounted) return;
     await maybeShowUpdateCheckPrompt(context);

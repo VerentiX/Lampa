@@ -1419,6 +1419,96 @@ class HomeController extends ChangeNotifier
     await _pushNotificationLabels();
   }
 
+  /// After Lampa power-button connect: always select the channel Auto twin
+  /// (`vpn-N-auto`). Sticky Clash selection can leave a pinned outbound from a
+  /// prior session; the consumer surface has no node picker, so Auto is the
+  /// only correct landing.
+  Future<void> ensureChannelAutoSelected() async {
+    for (var i = 0; i < 50; i++) {
+      if (_disposed) return;
+      if (_state.tunnelUp) break;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!_state.tunnelUp) {
+      _addDebug(DebugSource.app, 'ensureChannelAutoSelected: tunnel not up');
+      return;
+    }
+    for (var i = 0; i < 40; i++) {
+      if (_disposed) return;
+      if (_state.selectedGroup != null && _state.groups.isNotEmpty) break;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+
+    final routeFinal = RouteConfig.finalTag(_state.activeConfigRaw);
+    final groups = _state.groups;
+    String? selector;
+    if (routeFinal != null && groups.contains(routeFinal)) {
+      selector = routeFinal;
+    } else if (routeFinal != null && isChannelAutoTag(routeFinal)) {
+      final base = routeFinal.substring(0, routeFinal.length - '-auto'.length);
+      if (groups.contains(base)) selector = base;
+    }
+    selector ??= _state.selectedGroup;
+    if (selector != null && isChannelAutoTag(selector)) {
+      final base = selector.substring(0, selector.length - '-auto'.length);
+      if (groups.contains(base)) selector = base;
+    }
+    if (selector == null || !groups.contains(selector)) {
+      _addDebug(
+        DebugSource.app,
+        'ensureChannelAutoSelected: no selector group',
+      );
+      return;
+    }
+
+    final autoTag = '$selector-auto';
+    if (!isChannelAutoTag(autoTag)) {
+      _addDebug(
+        DebugSource.app,
+        'ensureChannelAutoSelected: $selector has no auto twin',
+      );
+      return;
+    }
+
+    if (_state.selectedGroup != selector) {
+      _emit(_state.copyWith(selectedGroup: selector));
+    }
+    if (_state.activeInGroup == autoTag) {
+      _addDebug(
+        DebugSource.app,
+        'ensureChannelAutoSelected: already $selector → $autoTag',
+      );
+      return;
+    }
+
+    try {
+      final ok = await _cc.selectOutbound(selector, autoTag);
+      if (!ok) {
+        _addDebug(
+          DebugSource.app,
+          'ensureChannelAutoSelected: selectOutbound rejected',
+        );
+        return;
+      }
+      final fresh = await _cc.getGroups();
+      if (fresh != null) {
+        _applyGroups(fresh);
+      } else {
+        _emit(_state.copyWith(activeInGroup: autoTag));
+      }
+      _addDebug(
+        DebugSource.app,
+        'ensureChannelAutoSelected: $selector → $autoTag',
+      );
+      BoxVpnClient.I.setAutomationActiveState(
+        node: autoTag,
+        group: selector,
+      );
+    } catch (e) {
+      _addDebug(DebugSource.app, 'ensureChannelAutoSelected: $e');
+    }
+  }
+
   Future<void> switchNode(String nodeTag) async {
     final group = _state.selectedGroup;
     if (group == null || !_state.tunnelUp) return;

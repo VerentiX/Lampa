@@ -390,7 +390,7 @@ Future<void> maybeShowUpdateCheckPrompt(BuildContext context) async {
     barrierDismissible: false,
     title: Text(getLocalText.s("Check for updates?")),
     content: Text(getLocalText.s(
-      "Lampa can check hattabych.ru once a day for a new version. Nothing installs by itself — you choose when to download.\n\nIf you installed from an app store, you can skip this.",
+      "Lampa can check VerentiX/Lampa GitHub Releases once a day for a new version. Nothing installs by itself — you choose when to download.\n\nIf you installed from an app store, you can skip this.",
     )),
     actions: [
       TextButton(

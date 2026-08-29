@@ -1133,6 +1133,26 @@ void main() {
   // `rules` → пресет молча терял все правила (ни warning, ни route.rules),
   // синтетические тесты этого не ловили.
   group('§246 e2e — реальный wizard_template.json', () {
+    test('route.final: P0-P4 direct, P5+ keeps vpn-1', () {
+      final raw = File('assets/wizard_template.json').readAsStringSync();
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final config = json['config'] as Map<String, dynamic>;
+
+      final p4 =
+          substituteVars(jsonDecode(jsonEncode(config)), const {
+                'priority_route_final': 'direct-out',
+              })
+              as Map<String, dynamic>;
+      final p5 =
+          substituteVars(jsonDecode(jsonEncode(config)), const {
+                'priority_route_final': 'vpn-1',
+              })
+              as Map<String, dynamic>;
+
+      expect((p4['route'] as Map)['final'], 'direct-out');
+      expect((p5['route'] as Map)['final'], 'vpn-1');
+    });
+
     SelectableRule realPreset(String presetId) {
       final raw = File('assets/wizard_template.json').readAsStringSync();
       final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -1179,8 +1199,7 @@ void main() {
       final preset = realPreset('traffic-processing');
       final cached = <String, String>{
         for (final rs in preset.ruleSets)
-          if (rs['type'] == 'remote')
-            rs['tag'] as String: '${rs['tag']}.srs',
+          if (rs['type'] == 'remote') rs['tag'] as String: '${rs['tag']}.srs',
       };
       final p4 = expandPreset(
         CustomRulePreset(name: 'Traffic', presetId: 'traffic-processing'),
@@ -1188,29 +1207,42 @@ void main() {
         srsPaths: cached,
       );
       expect(
-        p4.routingRules.any((r) => r['action'] == 'reject' &&
-            r['rule_set'] is List &&
-            (r['rule_set'] as List).contains('roscom-category-ads')),
+        p4.routingRules.any(
+          (r) =>
+              r['action'] == 'reject' &&
+              r['rule_set'] is List &&
+              (r['rule_set'] as List).contains('roscom-category-ads'),
+        ),
         isTrue,
       );
       expect(
-        p4.routingRules.any((r) =>
-            r['outbound'] == 'vpn-1' &&
-            r['rule_set'] is List &&
-            (r['rule_set'] as List).contains('roscom-youtube')),
+        p4.routingRules.any(
+          (r) =>
+              r['outbound'] == 'vpn-1' &&
+              r['rule_set'] is List &&
+              (r['rule_set'] as List).contains('roscom-youtube') &&
+              (r['rule_set'] as List).contains('refilter-domains') &&
+              (r['rule_set'] as List).contains('refilter-ips') &&
+              (r['rule_set'] as List).contains('roscom-geoblock-ru'),
+        ),
         isTrue,
       );
       expect(
-        p4.routingRules.any((r) =>
-            r['outbound'] == 'direct-out' &&
-            r['rule_set'] is List &&
-            (r['rule_set'] as List).contains('roscom-category-ru') &&
-            (r['rule_set'] as List).contains('roscom-ip-direct')),
+        p4.routingRules.any(
+          (r) =>
+              r['outbound'] == 'direct-out' &&
+              r['rule_set'] is List &&
+              (r['rule_set'] as List).contains('roscom-category-ru') &&
+              (r['rule_set'] as List).contains('roscom-ip-direct'),
+        ),
         isTrue,
       );
       expect(
-        p4.routingRules.any((r) => r['rule_set'] is List &&
-            (r['rule_set'] as List).contains('roscom-sber')),
+        p4.routingRules.any(
+          (r) =>
+              r['rule_set'] is List &&
+              (r['rule_set'] as List).contains('roscom-sber'),
+        ),
         isFalse,
       );
 
@@ -1227,16 +1259,22 @@ void main() {
         srsPaths: cached,
       );
       expect(
-        p5.routingRules.any((r) =>
-            r['outbound'] == 'vpn-3' &&
-            const DeepCollectionEquality()
-                .equals(r['rule_set'], ['roscom-sber', 'roscom-tbank'])),
+        p5.routingRules.any(
+          (r) =>
+              r['outbound'] == 'vpn-3' &&
+              const DeepCollectionEquality().equals(r['rule_set'], [
+                'roscom-sber',
+                'roscom-tbank',
+              ]),
+        ),
         isTrue,
       );
       expect(
-        p5.routingRules.any((r) =>
-            r['rule_set'] == 'roscom-whitelist' &&
-            r['outbound'] == 'direct-out'),
+        p5.routingRules.any(
+          (r) =>
+              r['rule_set'] == 'roscom-whitelist' &&
+              r['outbound'] == 'direct-out',
+        ),
         isTrue,
       );
     });

@@ -50,7 +50,7 @@ private class LampaPowerPlatformView(
         root.clipToPadding = false
         glow.setBackgroundResource(R.drawable.bg_power_glow)
         glow.alpha = if (shieldSeated && animate) 1f else 0f
-        root.addView(glow, frame(220, 220, Gravity.CENTER))
+        root.addView(glow, frame(236, 236, Gravity.CENTER))
 
         button.setBackgroundResource(
             if (shieldSeated) R.drawable.bg_power_btn_connected else R.drawable.bg_power_btn_inactive
@@ -62,7 +62,9 @@ private class LampaPowerPlatformView(
         content.setPadding(dp(9), dp(9), dp(9), dp(9))
         content.addView(shield, frameMatch())
         button.addView(content, frameMatch())
-        root.addView(button, frame(168, 168, Gravity.CENTER))
+        // Use more of the 248dp platform-view: the old 168dp dock looked
+        // undersized on modern phones and left too much inactive glow around it.
+        root.addView(button, frame(196, 196, Gravity.CENTER))
 
         shield.setPowered(shieldSeated, animate = false)
         channel.setMethodCallHandler(this)

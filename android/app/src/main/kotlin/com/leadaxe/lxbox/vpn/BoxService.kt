@@ -1034,7 +1034,7 @@ class BoxService(
         } else null
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setSmallIcon(R.drawable.ic_stat_lampa)
             .setContentTitle(notification.title)
             .setContentText(notification.body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

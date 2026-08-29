@@ -227,7 +227,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Debug-only preview of the consumer release surface. Release builds are
   /// always Lampa; debug builds can switch between Lampa and the full owner UI.
-  bool _debugLampaUi = false;
+  /// Default on so DEBUG cold start matches the consumer home (screenshot).
+  bool _debugLampaUi = true;
 
   /// §107 (R3): one-shot listener «subController освободился — догнать
   /// pending rebuild», см. [_retryRebuildWhenIdle].
@@ -275,9 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (changed) {
       await SettingsStorage.saveCustomRules(next);
-      AppLog.I.warning(
-        'Healed traffic-processing preset (was disabled)',
-      );
+      AppLog.I.warning('Healed traffic-processing preset (was disabled)');
     }
 
     // App DNS through Cloudflare/Google DoH via VPN; node hostnames via
@@ -286,8 +285,10 @@ class _HomeScreenState extends State<HomeScreen>
     const wantFinal = 'cloudflare_doh';
     const wantResolver = 'local_dns_resolver';
     final dnsFinal = await SettingsStorage.getVar('dns_final', '');
-    final resolver =
-        await SettingsStorage.getVar('dns_default_domain_resolver', '');
+    final resolver = await SettingsStorage.getVar(
+      'dns_default_domain_resolver',
+      '',
+    );
     if (!allowedFinals.contains(dnsFinal)) {
       await SettingsStorage.setVar('dns_final', wantFinal, flush: false);
       changed = true;
@@ -314,8 +315,7 @@ class _HomeScreenState extends State<HomeScreen>
     final hasSubNodes = _subController.entries.any(
       (e) => e.list.nodes.isNotEmpty || e.nodeCount > 0,
     );
-    final hollow =
-        hasSubNodes && _controller.state.configModel.nodeCount == 0;
+    final hollow = hasSubNodes && _controller.state.configModel.nodeCount == 0;
     if (hollow) {
       AppLog.I.warning(
         'Healed hollow config (0 proxy nodes while subscription has nodes)',
@@ -421,6 +421,7 @@ class _HomeScreenState extends State<HomeScreen>
     _ruleSetAutoUpdater.start();
     LampaAutoUpdates.I.bindGeo(_ruleSetAutoUpdater);
     unawaited(_loadHapticPref());
+    unawaited(_loadDebugLampaUiPref());
     // Track tunnel transitions для side-effect'ов (SnackBar при revoke,
     // animation для connecting, auto-dismiss timer для lastError).
     // AnimatedBuilder уже rebuildит UI на notifyListeners; listener здесь
@@ -699,8 +700,7 @@ class _HomeScreenState extends State<HomeScreen>
     final cur = VersionInfo.I.version;
     if (prev == cur) return false;
     await SettingsStorage.setVar(key, cur);
-    final hasUrlSubs =
-        _subController.entries.any((e) => e.url.isNotEmpty);
+    final hasUrlSubs = _subController.entries.any((e) => e.url.isNotEmpty);
     if (!hasUrlSubs) return false;
     AppLog.I.info(
       'App version $prev → $cur: force subscription refresh (UA Lampa-Mobile-SB)',
@@ -710,6 +710,18 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _loadHapticPref() async {
     await HapticService.I.loadFromPrefs();
+  }
+
+  Future<void> _loadDebugLampaUiPref() async {
+    if (!kDebugMode) return;
+    final on = await SettingsStorage.getDebugLampaUi();
+    if (!mounted || on == _debugLampaUi) return;
+    setState(() => _debugLampaUi = on);
+  }
+
+  void _setDebugLampaUi(bool enabled) {
+    setState(() => _debugLampaUi = enabled);
+    unawaited(SettingsStorage.setDebugLampaUi(enabled));
   }
 
   @override
@@ -1069,8 +1081,8 @@ class _HomeScreenState extends State<HomeScreen>
               child: Padding(
                 padding: const EdgeInsets.only(right: 8, top: 44),
                 child: _DebugLampaToggle(
-                  enabled: true,
-                  onChanged: (v) => setState(() => _debugLampaUi = v),
+                  enabled: _debugLampaUi,
+                  onChanged: _setDebugLampaUi,
                 ),
               ),
             ),
@@ -1107,9 +1119,7 @@ class _HomeScreenState extends State<HomeScreen>
         );
         final classic = Scaffold(
           // l10n-exempt: brand name, идентичен во всех локалях
-          appBar: AppBar(
-            title: const Text('L×Box'),
-          ),
+          appBar: AppBar(title: const Text('L×Box')),
           drawer: HomeDrawer(
             controller: _controller,
             subController: _subController,
@@ -1202,8 +1212,8 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Padding(
                   padding: const EdgeInsets.only(right: 8, top: 48),
                   child: _DebugLampaToggle(
-                    enabled: false,
-                    onChanged: (v) => setState(() => _debugLampaUi = v),
+                    enabled: _debugLampaUi,
+                    onChanged: _setDebugLampaUi,
                   ),
                 ),
               ),
@@ -1307,6 +1317,9 @@ class _HomeScreenState extends State<HomeScreen>
     // синхронного HTTP-fetch'а не делаем: если подписки протухли, trigger 2
     // (VPN connected + 2 мин) подтянет их через туннель.
     await _controller.start();
+    // Lampa power button: always land on channel Auto (urltest), not a sticky
+    // pinned outbound left from a previous session / owner UI.
+    if (_lampaUi) unawaited(_controller.ensureChannelAutoSelected());
     // §219 — inline error-snackbar удалён: он был мёртвым кодом. start()
     // эмитит lastError через _emit→notifyListeners→_onControllerChange, который
     // СИНХРОННО показывает snackbar и зовёт clearError() до возврата сюда →
@@ -1382,6 +1395,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _applyPriorityRouting(PriorityRoutingDecision decision) async {
     if (!mounted) return;
     final nextTier = decision.p5Plus ? 'true' : 'false';
+    final nextFinal = decision.p5Plus ? 'vpn-1' : 'direct-out';
     final oldTier = await SettingsStorage.getVar(
       'priority_p5_plus_active',
       'false',
@@ -1390,7 +1404,15 @@ class _HomeScreenState extends State<HomeScreen>
       'priority_proxy_outbound',
       'vpn-1',
     );
-    if (oldTier == nextTier && oldOutbound == decision.proxyOutbound) return;
+    final oldFinal = await SettingsStorage.getVar(
+      'priority_route_final',
+      'direct-out',
+    );
+    if (oldTier == nextTier &&
+        oldOutbound == decision.proxyOutbound &&
+        oldFinal == nextFinal) {
+      return;
+    }
 
     await SettingsStorage.setVar(
       'priority_p5_plus_active',
@@ -1400,7 +1422,9 @@ class _HomeScreenState extends State<HomeScreen>
     await SettingsStorage.setVar(
       'priority_proxy_outbound',
       decision.proxyOutbound,
+      flush: false,
     );
+    await SettingsStorage.setVar('priority_route_final', nextFinal);
     if (!mounted) return;
 
     final ok = await _rebuildConfig(silent: true);

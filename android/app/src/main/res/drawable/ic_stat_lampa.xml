@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Status-bar template: white silhouette of the Lampa lamp (system tints it). -->
+<!-- Monochrome status-bar portrait derived from the desktop Hottabych mark. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Neon ring from the desktop icon. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,18 C72,18 86,32 86,50 C86,68 72,82 54,82 C36,82 22,68 22,50 C22,32 36,18 54,18 Z" />
+        android:fillType="evenOdd"
+        android:pathData="M12,1.2A10.8,10.8 0,1 1,12 22.8A10.8,10.8 0,1 1,12 1.2M12,3A9,9 0,1 0,12 21A9,9 0,1 0,12 3" />
+    <!-- Bald head and ears. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,44 C38,34 45,28 54,28 C63,28 70,34 70,44 L70,58 C70,66 63,72 54,72 C45,72 38,66 38,58 Z" />
+        android:pathData="M12,4.2C8.9,4.2 7.3,6.4 7.3,9.1C6.4,8.7 5.8,9.4 6.1,10.5C6.3,11.3 6.9,11.9 7.6,11.8C8.3,14 9.7,15.2 12,15.2C14.3,15.2 15.7,14 16.4,11.8C17.1,11.9 17.7,11.3 17.9,10.5C18.2,9.4 17.6,8.7 16.7,9.1C16.7,6.4 15.1,4.2 12,4.2Z" />
+    <!-- Long beard, the recognisable desktop character silhouette. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M34,34 C34,24 44,18 54,18 C64,18 74,24 74,34 C76,38 72,42 68,40 C64,46 44,46 40,40 C36,42 32,38 34,34 Z" />
+        android:pathData="M8.4,12.3C9.3,13.2 10.2,13.6 12,13.6C13.8,13.6 14.7,13.2 15.6,12.3C15.2,15.6 14,18.7 12,21C10,18.7 8.8,15.6 8.4,12.3Z" />
+    <!-- Hoodie shoulders. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M42,58 C42,66 48,74 54,76 C60,74 66,66 66,58 C62,62 46,62 42,58 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M46,72 L62,72 L64,78 L44,78 Z" />
+        android:pathData="M7.5,15.1C5.4,15.8 4.2,17.1 3.6,19.2C5.5,21 8.5,22 12,22C15.5,22 18.5,21 20.4,19.2C19.8,17.1 18.6,15.8 16.5,15.1C15.6,18 14.1,20.2 12,22C9.9,20.2 8.4,18 7.5,15.1Z" />
 </vector>

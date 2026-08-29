@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -91,9 +93,8 @@ class _LampaHomeState extends State<LampaHome> {
 
   SubscriptionEntry? get _subEntry => _activeSub;
 
-  static String _subsSig(List<SubscriptionEntry> subs) => subs
-      .map((e) => '${e.id}|${e.enabled}|${e.url}|${e.nodeCount}')
-      .join(';');
+  static String _subsSig(List<SubscriptionEntry> subs) =>
+      subs.map((e) => '${e.id}|${e.enabled}|${e.url}|${e.nodeCount}').join(';');
 
   String get _profileTitle {
     // Whole-connection name: urltest PROFILE_REMARK (e.g. "}{0ТТ@БЬ)Ч"),
@@ -112,11 +113,7 @@ class _LampaHomeState extends State<LampaHome> {
     final remark = _urltestRemark(e);
     if (remark != null) return remark;
     final metaTitle = e.meta?.profileTitle?.trim() ?? '';
-    for (final candidate in [
-      metaTitle,
-      e.name.trim(),
-      e.displayName.trim(),
-    ]) {
+    for (final candidate in [metaTitle, e.name.trim(), e.displayName.trim()]) {
       if (candidate.isEmpty) continue;
       if (_looksLikeVpnTag(candidate)) continue;
       if (_isGenericGroupTag(candidate)) continue;
@@ -178,9 +175,7 @@ class _LampaHomeState extends State<LampaHome> {
     if (_looksLikeVpnTag(tag)) return '';
     for (final e in widget.subscriptions) {
       for (final n in e.list.nodes) {
-        final full = e.tagPrefix.isEmpty
-            ? n.tag
-            : '${e.tagPrefix} ${n.tag}';
+        final full = e.tagPrefix.isEmpty ? n.tag : '${e.tagPrefix} ${n.tag}';
         final compact = e.tagPrefix.isEmpty ? n.tag : '${e.tagPrefix}${n.tag}';
         if (tag == n.tag ||
             tag == full ||
@@ -279,10 +274,12 @@ class _LampaHomeState extends State<LampaHome> {
     } else {
       final future = _billing.subscription(id);
       _info = future;
-      future.then((info) {
-        if (!mounted || _subId != id) return;
-        setState(() => _billingTitle = info.title);
-      }).catchError((_) {});
+      future
+          .then((info) {
+            if (!mounted || _subId != id) return;
+            setState(() => _billingTitle = info.title);
+          })
+          .catchError((_) {});
     }
     if (scheduleRebuild && mounted) setState(() {});
   }
@@ -291,7 +288,7 @@ class _LampaHomeState extends State<LampaHome> {
   Widget build(BuildContext context) {
     final up = widget.state.tunnelUp;
     return Scaffold(
-      backgroundColor: const Color(0xff0a0603),
+      backgroundColor: LampaUi.bgDeep,
       body: Stack(
         children: [
           const Positioned.fill(child: _CosmicBackground()),
@@ -305,29 +302,31 @@ class _LampaHomeState extends State<LampaHome> {
                       IconButton(
                         tooltip: 'Ещё',
                         onPressed: _showOverflowMenu,
-                        icon: const Icon(Icons.more_vert),
+                        icon: const Icon(Icons.more_vert, color: LampaUi.link),
                       ),
                       const Spacer(),
                       IconButton(
                         tooltip: 'Добавить подписку',
                         onPressed: _showImportMenu,
-                        icon: const Icon(Icons.add),
+                        icon: const Icon(Icons.add, color: LampaUi.accent),
                       ),
                       IconButton(
                         tooltip: 'Импорт из буфера',
                         onPressed: _importClipboard,
-                        icon: const Icon(Icons.content_paste),
+                        icon: const Icon(
+                          Icons.content_paste,
+                          color: LampaUi.crt,
+                        ),
                       ),
                       const _LampaDownloadBadge(),
                       Padding(
                         padding: const EdgeInsets.only(right: 10, left: 2),
                         child: Text(
-                          VersionInfo.I.version,
-                          style: const TextStyle(
+                          'v${VersionInfo.I.version}',
+                          style: LampaUi.mono.copyWith(
                             fontSize: 11,
-                            color: Color(0x88ffffff),
+                            color: LampaUi.muted,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
@@ -335,38 +334,48 @@ class _LampaHomeState extends State<LampaHome> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
                   child: Column(
                     children: [
+                      const SizedBox(height: 18),
                       Transform.translate(
-                        offset: const Offset(0, 4),
+                        offset: const Offset(0, 18),
                         child: _PowerDock(
                           connecting:
                               widget.state.tunnel == TunnelStatus.connecting,
-                          // Keep "on" look while Stopping — avoids a heavy
-                          // disconnect flip fighting VPN teardown on the UI thread.
-                          connected: up ||
+                          connected:
+                              up ||
                               widget.state.tunnel == TunnelStatus.stopping,
                           onTap: _working ? null : widget.onToggle,
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      Text(
+                        up ? '» В СЕТИ «' : '» НЕ В СЕТИ «',
+                        style: LampaUi.mono.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                          color: up ? LampaUi.crt : LampaUi.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         _profileTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
+                        style: LampaUi.mono.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: LampaUi.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                       if (widget.onOpenSplitTunnel != null)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(22),
                             onTap: () {
                               widget.onOpenSplitTunnel!();
                               Future<void>.delayed(
@@ -384,28 +393,34 @@ class _LampaHomeState extends State<LampaHome> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
-                                          'Раздельное туннелирование',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Color(0xe6ffffff),
-                                            fontWeight: FontWeight.w500,
+                                        Text(
+                                          '>> разд. туннель',
+                                          style: LampaUi.mono.copyWith(
+                                            fontSize: 12,
+                                            color: LampaUi.link,
+                                            fontWeight: FontWeight.w700,
+                                            decoration:
+                                                TextDecoration.underline,
+                                            decorationColor: LampaUi.link,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           _splitSummary,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0x99ffffff),
+                                          style: LampaUi.mono.copyWith(
+                                            fontSize: 11,
+                                            color: LampaUi.muted,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    color: Color(0x66ffffff),
+                                  const Text(
+                                    '»',
+                                    style: TextStyle(
+                                      color: LampaUi.accent,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -414,9 +429,8 @@ class _LampaHomeState extends State<LampaHome> {
                         ),
                       if (widget.onOpenUserRules != null)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(22),
                             onTap: () {
                               widget.onOpenUserRules!();
                               Future<void>.delayed(
@@ -434,28 +448,34 @@ class _LampaHomeState extends State<LampaHome> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
-                                          'Мои правила',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Color(0xe6ffffff),
-                                            fontWeight: FontWeight.w500,
+                                        Text(
+                                          '>> мои правила',
+                                          style: LampaUi.mono.copyWith(
+                                            fontSize: 12,
+                                            color: LampaUi.link,
+                                            fontWeight: FontWeight.w700,
+                                            decoration:
+                                                TextDecoration.underline,
+                                            decorationColor: LampaUi.link,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           _rulesSummary,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0x99ffffff),
+                                          style: LampaUi.mono.copyWith(
+                                            fontSize: 11,
+                                            color: LampaUi.muted,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    color: Color(0x66ffffff),
+                                  const Text(
+                                    '»',
+                                    style: TextStyle(
+                                      color: LampaUi.accent,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -463,30 +483,36 @@ class _LampaHomeState extends State<LampaHome> {
                           ),
                         ),
                       Material(
-                        color: const Color(0x22ff8f00),
-                        borderRadius: BorderRadius.circular(18),
+                        color: const Color(0x28ff9900),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
                           onTap: _working ? null : _refreshSubscription,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 11,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: LampaUi.accent,
+                                width: 2,
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.refresh,
-                                  color: Color(0xffffc46b),
+                                  size: 18,
+                                  color: LampaUi.accent,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Обновить подписку',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xffffe0a8),
+                                  '[ обновить подписку ]',
+                                  style: LampaUi.mono.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: LampaUi.accent,
                                   ),
                                 ),
                               ],
@@ -494,37 +520,36 @@ class _LampaHomeState extends State<LampaHome> {
                           ),
                         ),
                       ),
-                      // Connection check temporarily hidden.
                     ],
                   ),
                 ),
                 Expanded(
                   child: RefreshIndicator(
+                    color: LampaUi.crt,
                     onRefresh: _pullRefresh,
                     child: ListView(
                       padding: const EdgeInsets.only(bottom: 24),
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
+                          padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
                           child: Row(
                             children: [
-                              const Expanded(
-                                child: Text(
-                                  'Подписки',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.3,
-                                    color: Color(0xccffffff),
-                                  ),
+                              Text(
+                                ':: гостевая ::',
+                                style: LampaUi.mono.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                  color: LampaUi.accent,
                                 ),
                               ),
+                              const Spacer(),
                               if (_urlSubs.length > 1)
-                                const Text(
+                                Text(
                                   'выберите',
-                                  style: TextStyle(
+                                  style: LampaUi.mono.copyWith(
                                     fontSize: 11,
-                                    color: Color(0x66ffffff),
+                                    color: LampaUi.muted,
                                   ),
                                 ),
                             ],
@@ -651,16 +676,19 @@ class _LampaHomeState extends State<LampaHome> {
     await LampaUi.dialog<void>(
       context: context,
       title: const Text('Ссылка подписки'),
-      content: SelectableText(url, style: const TextStyle(color: LampaUi.onSurface)),
+      content: SelectableText(
+        url,
+        style: const TextStyle(color: LampaUi.onSurface),
+      ),
       actions: [
         TextButton(
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: url));
             if (context.mounted) Navigator.pop(context);
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                LampaUi.snack('Ссылка скопирована'),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(LampaUi.snack('Ссылка скопирована'));
             }
           },
           child: const Text('Копировать'),
@@ -681,9 +709,9 @@ class _LampaHomeState extends State<LampaHome> {
     if (!mounted) return;
     if (info == null) {
       if (force) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          LampaUi.snack('Обновлений нет'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(LampaUi.snack('Обновлений нет'));
       }
       return;
     }
@@ -709,22 +737,29 @@ class _LampaHomeState extends State<LampaHome> {
     );
     if (go != true || !mounted) return;
     setState(() => _updatingApp = true);
-    LampaDownloadProgress.I.start(
-      kind: LampaDownloadKind.app,
-      label: 'Приложение ${info.version}',
-    );
     final messenger = ScaffoldMessenger.of(context);
-    final apk = await LampaAppUpdate.I.download(
-      info,
-      onProgress: (got, total) {
-        LampaDownloadProgress.I.update(
-          kind: LampaDownloadKind.app,
-          received: got,
-          total: total,
-        );
-      },
-    );
-    LampaDownloadProgress.I.finish(LampaDownloadKind.app);
+    File? apk;
+    try {
+      apk = await LampaAppUpdate.I.download(
+        info,
+        onProgress: (got, total) {
+          if (!LampaDownloadProgress.I.isKindActive(LampaDownloadKind.app)) {
+            LampaDownloadProgress.I.start(
+              kind: LampaDownloadKind.app,
+              label: 'Приложение ${info.version}',
+              total: total,
+            );
+          }
+          LampaDownloadProgress.I.update(
+            kind: LampaDownloadKind.app,
+            received: got,
+            total: total,
+          );
+        },
+      );
+    } finally {
+      LampaDownloadProgress.I.finish(LampaDownloadKind.app);
+    }
     if (!mounted) return;
     setState(() => _updatingApp = false);
     if (apk == null) {
@@ -736,6 +771,7 @@ class _LampaHomeState extends State<LampaHome> {
       messenger.showSnackBar(LampaUi.snack('Не удалось открыть установщик'));
     }
   }
+
   Future<void> _showImportMenu() async {
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -771,9 +807,9 @@ class _LampaHomeState extends State<LampaHome> {
     final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text?.trim();
     if (text == null || text.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          LampaUi.snack('В буфере обмена нет ссылки подписки'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(LampaUi.snack('В буфере обмена нет ссылки подписки'));
       }
       return;
     }
@@ -890,7 +926,9 @@ class _LampaHomeState extends State<LampaHome> {
                       groupValue: asIs,
                       activeColor: const Color(0xffff8f00),
                       title: const Text('AsIs'),
-                      subtitle: const Text('Облегчённая — только домен, без резолва IP.'),
+                      subtitle: const Text(
+                        'Облегчённая — только домен, без резолва IP.',
+                      ),
                       onChanged: (v) => setSheet(() => asIs = v!),
                     ),
                     RadioListTile<bool>(
@@ -921,24 +959,21 @@ class _LampaHomeState extends State<LampaHome> {
     );
     if (applied != true) return;
     await SettingsStorage.setVar('dns_final', dns, flush: false);
-    await SettingsStorage.setVar(
-      'resolve_enabled',
-      asIs ? 'false' : 'true',
-    );
+    await SettingsStorage.setVar('resolve_enabled', asIs ? 'false' : 'true');
     await widget.onNetworkSettingsChanged?.call();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      LampaUi.snack('Настройки сети сохранены'),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(LampaUi.snack('Настройки сети сохранены'));
   }
 
   Future<void> _refreshSubscription() async {
     await widget.onRefreshSubscription();
     await _syncConnectionRemark();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      LampaUi.snack('Подписка обновлена'),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(LampaUi.snack('Подписка обновлена'));
     if (_subId == null) return;
     final future = _billing.subscription(_subId!);
     setState(() => _info = future);
@@ -949,36 +984,34 @@ class _LampaHomeState extends State<LampaHome> {
   }
 
   Widget _chip(IconData icon) => Container(
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     decoration: BoxDecoration(
-      color: const Color(0x1a00f5d4),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0x4400f5d4)),
+      color: const Color(0x221a9944),
+      border: Border.all(color: LampaUi.crtDim, width: 1),
     ),
-    child: Icon(icon, size: 20, color: const Color(0xff00f5d4)),
+    child: Icon(icon, size: 18, color: LampaUi.crt),
   );
 
   Widget _subscriptionCard() {
     final subs = _urlSubs;
     if (subs.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0x1fffffff),
-          borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: const Color(0x33ffffff)),
+          color: LampaUi.panel,
+          border: Border.all(color: LampaUi.border, width: 2),
         ),
-        child: const Text(
-          'Подписок пока нет. Добавьте ссылку сверху.',
-          style: TextStyle(color: Color(0x99ffffff)),
+        child: Text(
+          'гостевая пуста. добавьте /auto/ ссылку сверху.',
+          style: LampaUi.mono.copyWith(color: LampaUi.muted, fontSize: 12),
         ),
       );
     }
     return Column(
       children: [
         for (var i = 0; i < subs.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
+          if (i > 0) const SizedBox(height: 8),
           _oneSubscriptionCard(subs[i]),
         ],
       ],
@@ -987,7 +1020,8 @@ class _LampaHomeState extends State<LampaHome> {
 
   Widget _oneSubscriptionCard(SubscriptionEntry entry) {
     final multi = _urlSubs.length > 1;
-    final active = identical(entry, _activeSub) ||
+    final active =
+        identical(entry, _activeSub) ||
         (entry.enabled && entry.id == _activeSub?.id);
     final title = _connectionName(entry);
     final shown = title.isNotEmpty ? title : 'Хаттабыч VPN';
@@ -995,23 +1029,16 @@ class _LampaHomeState extends State<LampaHome> {
     final expandedId = _expandedSubId ?? (active ? entry.id : null);
     final expanded = expandedId == entry.id;
     final highlight = multi && active;
-    final accent = highlight
-        ? const Color(0x66ffb347)
-        : const Color(0x28ffffff);
-    final bg = highlight
-        ? const Color(0x14ff8f00)
-        : const Color(0x14ffffff);
+    final edge = highlight ? LampaUi.crt : LampaUi.border;
 
     return Container(
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent, width: highlight ? 1.1 : 1),
+        color: highlight ? const Color(0x181a9944) : LampaUi.panel,
+        border: Border.all(color: edge, width: highlight ? 2 : 1),
       ),
       child: Column(
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(18),
             onTap: () async {
               if (!active && widget.onSelectSubscription != null) {
                 await widget.onSelectSubscription!(entry);
@@ -1022,20 +1049,18 @@ class _LampaHomeState extends State<LampaHome> {
               _reload();
             },
             child: SizedBox(
-              height: 52,
+              height: 50,
               child: Row(
                 children: [
                   SizedBox(
-                    width: 40,
+                    width: 36,
                     child: AnimatedRotation(
                       turns: expanded ? 0 : -.25,
                       duration: const Duration(milliseconds: 200),
                       child: Icon(
                         Icons.expand_more,
-                        size: 26,
-                        color: highlight
-                            ? const Color(0xffffc46b)
-                            : const Color(0x99ffffff),
+                        size: 22,
+                        color: highlight ? LampaUi.crt : LampaUi.link,
                       ),
                     ),
                   ),
@@ -1048,25 +1073,26 @@ class _LampaHomeState extends State<LampaHome> {
                           shown,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: highlight
-                                ? const Color(0xffffe7c2)
-                                : Colors.white,
+                          style: LampaUi.mono.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: highlight ? LampaUi.crt : LampaUi.link,
+                            decoration: TextDecoration.underline,
+                            decorationColor: highlight
+                                ? LampaUi.crt
+                                : LampaUi.link,
                           ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           [
                             if (nodes > 0) '$nodes конф.',
-                            if (highlight) 'активна',
-                            if (nodes == 0 && !highlight)
-                              'нажмите, чтобы выбрать',
+                            if (highlight) 'ACTIVE',
+                            if (nodes == 0 && !highlight) 'выбрать',
                           ].join(' · '),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0x88ffffff),
+                          style: LampaUi.mono.copyWith(
+                            fontSize: 10,
+                            color: LampaUi.muted,
                           ),
                         ),
                       ],
@@ -1074,12 +1100,12 @@ class _LampaHomeState extends State<LampaHome> {
                   ),
                   PopupMenuButton<String>(
                     tooltip: 'Действия',
-                    color: const Color(0xff1a1208),
+                    color: LampaUi.bg,
                     padding: EdgeInsets.zero,
                     icon: const Icon(
                       Icons.more_horiz,
-                      color: Color(0xffd7f0ff),
-                      size: 22,
+                      color: LampaUi.accent,
+                      size: 20,
                     ),
                     onSelected: (action) => _onSubMenuAction(action, entry),
                     itemBuilder: (_) => const [
@@ -1107,7 +1133,7 @@ class _LampaHomeState extends State<LampaHome> {
             curve: Curves.easeOutCubic,
             child: expanded && active
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     child: _billingPanel(),
                   )
                 : const SizedBox.shrink(),
@@ -1124,9 +1150,9 @@ class _LampaHomeState extends State<LampaHome> {
         if (url.isEmpty) return;
         await Clipboard.setData(ClipboardData(text: url));
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          LampaUi.snack('Ссылка скопирована'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(LampaUi.snack('Ссылка скопирована'));
       case 'refresh':
         if (widget.onRefreshOne != null) {
           await widget.onRefreshOne!(entry);
@@ -1135,9 +1161,9 @@ class _LampaHomeState extends State<LampaHome> {
           await _syncConnectionRemark();
         }
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          LampaUi.snack('Подписка обновлена'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(LampaUi.snack('Подписка обновлена'));
         final id = lampaSubId(entry.url);
         if (id != null) {
           final future = _billing.subscription(id);
@@ -1222,9 +1248,12 @@ class _LampaHomeState extends State<LampaHome> {
                       _subId = id;
                       _info = future;
                     });
-                    future.then((info) {
-                      if (mounted) setState(() => _billingTitle = info.title);
-                    }).catchError((_) {});
+                    future
+                        .then((info) {
+                          if (mounted)
+                            setState(() => _billingTitle = info.title);
+                        })
+                        .catchError((_) {});
                   },
                   child: const Text('Повторить'),
                 ),
@@ -1255,23 +1284,20 @@ class _LampaHomeState extends State<LampaHome> {
                       info.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: LampaUi.mono.copyWith(
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xffe8f0ff),
+                        color: LampaUi.muted,
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    daysOk ? '${info.daysLeft} дн.' : 'истёк',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.4,
-                      color: daysOk
-                          ? const Color(0xffffd180)
-                          : const Color(0xffff8a80),
+                    daysOk ? 'счётчик: ${info.daysLeft} дн.' : 'EXPIRED',
+                    style: LampaUi.mono.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: daysOk ? LampaUi.crt : LampaUi.warn,
                     ),
                   ),
                 ],
@@ -1294,7 +1320,7 @@ class _LampaHomeState extends State<LampaHome> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xffffd180),
+                      foregroundColor: LampaUi.link,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 2,
@@ -1303,11 +1329,13 @@ class _LampaHomeState extends State<LampaHome> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: () => _choosePlan(info),
-                    child: const Text(
-                      'Продлить',
-                      style: TextStyle(
+                    child: Text(
+                      '[ продлить ]',
+                      style: LampaUi.mono.copyWith(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.underline,
+                        decorationColor: LampaUi.link,
                       ),
                     ),
                   ),
@@ -1330,46 +1358,43 @@ class _LampaHomeState extends State<LampaHome> {
     final limitLabel = limit <= 0
         ? '∞'
         : (limitGb >= 10
-            ? limitGb.toStringAsFixed(0)
-            : limitGb.toStringAsFixed(1));
+              ? limitGb.toStringAsFixed(0)
+              : limitGb.toStringAsFixed(1));
     final barColor = pct > 0.9
-        ? const Color(0xffff8a80)
+        ? LampaUi.warn
         : pct > 0.7
-            ? const Color(0xffffb347)
-            : const Color(0xffffc46b);
+        ? LampaUi.accent
+        : LampaUi.crt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              '$usedLabel / $limitLabel ГБ',
-              style: const TextStyle(
+              'трафик: $usedLabel/$limitLabel ГБ',
+              style: LampaUi.mono.copyWith(
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Color(0xddffffff),
+                fontWeight: FontWeight.w700,
+                color: LampaUi.onSurface,
               ),
             ),
             const Spacer(),
             if (limit > 0)
               Text(
                 '${(pct * 100).round()}%',
-                style: const TextStyle(
+                style: LampaUi.mono.copyWith(
                   fontSize: 10,
-                  color: Color(0x88ffffff),
+                  color: LampaUi.muted,
                 ),
               ),
           ],
         ),
         const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
-            value: limit > 0 ? pct : null,
-            minHeight: 4,
-            backgroundColor: const Color(0x33ffffff),
-            color: barColor,
-          ),
+        LinearProgressIndicator(
+          value: limit > 0 ? pct : null,
+          minHeight: 6,
+          backgroundColor: const Color(0x33224466),
+          color: barColor,
         ),
       ],
     );
@@ -1390,26 +1415,19 @@ class _LampaHomeState extends State<LampaHome> {
       if (!package.active && days != null) days,
     ];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: package.active
-            ? const Color(0x28ffb347)
-            : const Color(0x18ffffff),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: package.active
-              ? const Color(0x66ffb347)
-              : const Color(0x33ffffff),
-        ),
+            ? const Color(0x2233ff66)
+            : const Color(0x1466b3ff),
+        border: Border.all(color: package.active ? LampaUi.crt : LampaUi.link),
       ),
       child: Text(
         parts.join(' · '),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: package.active
-              ? const Color(0xffffe0a8)
-              : const Color(0xccffffff),
+        style: LampaUi.mono.copyWith(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: package.active ? LampaUi.crt : LampaUi.link,
         ),
       ),
     );
@@ -1419,38 +1437,55 @@ class _LampaHomeState extends State<LampaHome> {
     width: double.infinity,
     padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
     decoration: BoxDecoration(
-      color: const Color(0x18101008),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0x33ffb347)),
+      color: const Color(0xff080c16),
+      border: Border.all(color: const Color(0x5544aaff)),
     ),
     child: child,
   );
   Future<void> _choosePlan(LampaSubscriptionInfo info) async {
     final plan = await showModalBottomSheet<LampaPlan>(
       context: context,
-      backgroundColor: const Color(0xff1a1208),
+      backgroundColor: LampaUi.bg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(color: LampaUi.border, width: 2),
       ),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const ListTile(
+            ListTile(
               title: Text(
-                'Выберите тариф',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                ':: тариф ::',
+                style: LampaUi.mono.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: LampaUi.accent,
+                ),
               ),
             ),
             ...info.plans.map(
               (p) => ListTile(
-                title: Text('${p.trafficGb} ГБ'),
-                subtitle: Text('${p.days} дн. · ${p.title}'),
+                title: Text(
+                  '${p.trafficGb} ГБ',
+                  style: LampaUi.mono.copyWith(
+                    color: LampaUi.link,
+                    fontWeight: FontWeight.w800,
+                    decoration: TextDecoration.underline,
+                    decorationColor: LampaUi.link,
+                  ),
+                ),
+                subtitle: Text(
+                  '${p.days} дн. · ${p.title}',
+                  style: LampaUi.mono.copyWith(
+                    color: LampaUi.muted,
+                    fontSize: 12,
+                  ),
+                ),
                 trailing: Text(
                   '${p.priceRub} ₽',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xffffd180),
+                  style: LampaUi.mono.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: LampaUi.accent,
                   ),
                 ),
                 onTap: () => Navigator.pop(context, p),
@@ -1463,7 +1498,7 @@ class _LampaHomeState extends State<LampaHome> {
     if (plan == null || !mounted) return;
     final method = await showModalBottomSheet<({String method, bool test})>(
       context: context,
-      backgroundColor: const Color(0xff1a1208),
+      backgroundColor: LampaUi.bg,
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1474,7 +1509,8 @@ class _LampaHomeState extends State<LampaHome> {
                 leading: const Icon(Icons.account_balance),
                 title: const Text('СБП'),
                 subtitle: const Text('Через ваш банк, за несколько секунд'),
-                onTap: () => Navigator.pop(context, (method: 'sbp', test: false)),
+                onTap: () =>
+                    Navigator.pop(context, (method: 'sbp', test: false)),
               ),
             if (info.methods.contains('usdt'))
               ListTile(
@@ -1504,14 +1540,13 @@ class _LampaHomeState extends State<LampaHome> {
           plan,
           method.method,
           test: method.test,
-        ))
-            .toString(),
+        )).toString(),
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          LampaUi.snack('Ошибка оплаты: $e'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(LampaUi.snack('Ошибка оплаты: $e'));
       }
     }
   }
@@ -1642,14 +1677,11 @@ class _GlassCard extends StatelessWidget {
   const _GlassCard({required this.child});
   @override
   Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 56),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    constraints: const BoxConstraints(minHeight: 52),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0x22ffffff), Color(0x14ffffff)],
-      ),
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0x35ffffff)),
+      color: LampaUi.panel,
+      border: Border.all(color: LampaUi.border, width: 1),
     ),
     child: child,
   );
@@ -1658,39 +1690,68 @@ class _GlassCard extends StatelessWidget {
 class _CosmicBackground extends StatelessWidget {
   const _CosmicBackground();
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.bottomLeft,
-        end: Alignment.topRight,
-        colors: [Color(0xff120a04), Color(0xff1e1208), Color(0xff0a0603)],
-      ),
-    ),
-    child: CustomPaint(painter: _GlowPainter()),
+  Widget build(BuildContext context) => ColoredBox(
+    color: LampaUi.bgDeep,
+    child: CustomPaint(painter: _RunetPainter()),
   );
 }
 
-class _GlowPainter extends CustomPainter {
+/// Starfield + CRT scanlines — personal homepage / dial-up night vibe.
+class _RunetPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
-    final p1 = Offset(s.width * .5, s.height * .22),
-        p2 = Offset(s.width * .82, s.height * .78);
+    final glow = Offset(s.width * .5, s.height * .2);
     c.drawCircle(
-      p1,
-      s.width * 1.05,
+      glow,
+      s.width * .95,
       Paint()
         ..shader = const RadialGradient(
-          colors: [Color(0x44ffab40), Color(0x00ffab40)],
-        ).createShader(Rect.fromCircle(center: p1, radius: s.width * 1.05)),
+          colors: [Color(0x281a9944), Color(0x00000000)],
+        ).createShader(Rect.fromCircle(center: glow, radius: s.width * .95)),
     );
-    c.drawCircle(
-      p2,
-      s.width * .9,
-      Paint()
-        ..shader = const RadialGradient(
-          colors: [Color(0x33e64a19), Color(0x00e64a19)],
-        ).createShader(Rect.fromCircle(center: p2, radius: s.width * .9)),
-    );
+    final star = Paint()..color = const Color(0x66e8f0ff);
+    final rnd = [
+      0.12,
+      0.08,
+      0.77,
+      0.14,
+      0.33,
+      0.22,
+      0.91,
+      0.18,
+      0.55,
+      0.31,
+      0.18,
+      0.44,
+      0.68,
+      0.39,
+      0.42,
+      0.52,
+      0.85,
+      0.48,
+      0.07,
+      0.61,
+      0.63,
+      0.71,
+      0.29,
+      0.79,
+      0.94,
+      0.66,
+      0.48,
+      0.88,
+      0.16,
+      0.93,
+    ];
+    for (var i = 0; i < rnd.length; i += 2) {
+      final x = rnd[i] * s.width;
+      final y = rnd[i + 1] * s.height;
+      final r = (i % 5 == 0) ? 1.6 : 0.9;
+      c.drawCircle(Offset(x, y), r, star);
+    }
+    final scan = Paint()..color = const Color(0x0affffff);
+    for (var y = 0.0; y < s.height; y += 3) {
+      c.drawRect(Rect.fromLTWH(0, y, s.width, 1), scan);
+    }
   }
 
   @override
@@ -1759,8 +1820,8 @@ class _PowerDockState extends State<_PowerDock> with WidgetsBindingObserver {
     }
     return RepaintBoundary(
       child: SizedBox(
-        width: 196,
-        height: 196,
+        width: 248,
+        height: 248,
         child: AndroidView(
           viewType: 'com.leadaxe.lxbox/lampa_power',
           creationParams: {

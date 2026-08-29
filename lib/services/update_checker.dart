@@ -18,7 +18,7 @@ import 'settings_storage.dart';
 ///
 /// **Lampa consumer:** disabled. This APK (`ru.hattabych.lampa.fdroid`) uses
 /// its own version line (`1.x`) and updates via `LampaAppUpdate` /
-/// hattabych.ru — not Leadaxe/LxBox GitHub tags (`2.x`), which would falsely
+/// VerentiX/Lampa GitHub Releases — not Leadaxe/LxBox tags (`2.x`), which would falsely
 /// offer “v2.21.0 available” over local `1.5.1`.
 class UpdateChecker {
   UpdateChecker._();
@@ -103,7 +103,7 @@ class UpdateChecker {
   Future<UpdateCheckResult> forceCheck({required String localVersion}) async {
     if (!enabled) {
       return UpdateCheckResult.skipped(
-        'GitHub check disabled — Lampa updates via hattabych.ru',
+        'LxBox update check disabled — Lampa uses VerentiX/Lampa releases',
       );
     }
     if (_inFlight) return UpdateCheckResult.skipped('check already in flight');

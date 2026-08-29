@@ -7,6 +7,8 @@ plugins {
 
 import java.io.FileInputStream
 import java.util.Properties
+import com.android.build.OutputFile
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
@@ -93,8 +95,6 @@ android {
     // Если var не задан — поведение не меняется (CI-сборка остаётся
     // универсальной для всех 3 ABI).
     val abiFilterEnv: String? = System.getenv("LXBOX_ABI_FILTER")
-    val localArm64Only =
-        abiFilterEnv.isNullOrBlank() && System.getenv("CI").isNullOrBlank()
     if (!abiFilterEnv.isNullOrBlank()) {
         val keepAbis = abiFilterEnv.split(",").map { it.trim() }.toSet()
         defaultConfig.ndk.abiFilters.clear()
@@ -109,13 +109,20 @@ android {
                 jniLibs.excludes += "lib/$abi/**"
             }
         }
-    } else if (localArm64Only) {
-        // Faster local debug/release installs on arm64 phones: drop other ABIs
-        // from libbox.aar (~55–66 MB each). Override with LXBOX_ABI_FILTER or CI=1.
-        packaging {
-            jniLibs.excludes += "lib/armeabi-v7a/**"
-            jniLibs.excludes += "lib/x86_64/**"
-            jniLibs.excludes += "lib/x86/**"
+    }
+
+    // Android Studio / `flutter build apk --release`: emit small per-ABI APKs
+    // and one universal fallback. Keep Debug as a single APK so Run/Debug can
+    // install it without asking which output to use.
+    val buildingRelease = gradle.startParameter.taskNames.any {
+        it.contains("release", ignoreCase = true)
+    }
+    splits {
+        abi {
+            isEnable = buildingRelease && abiFilterEnv.isNullOrBlank()
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -132,12 +139,7 @@ android {
 
     buildTypes {
         debug {
-            // Local debug installs: only arm64 unless LXBOX_ABI_FILTER / CI set.
-            // Cuts libbox packaging time and APK size on a typical phone.
-            if (localArm64Only) {
-                ndk.abiFilters.clear()
-                ndk.abiFilters.add("arm64-v8a")
-            }
+            // Debug remains universal; release is split below.
         }
         release {
             signingConfig =
@@ -152,6 +154,18 @@ android {
     packaging {
         jniLibs { useLegacyPackaging = true }
     }
+
+    applicationVariants.all {
+        if (buildType.name != "release") return@all
+        outputs.all {
+            val output = this as BaseVariantOutputImpl
+            val abi = output.filters
+                .firstOrNull { it.filterType == OutputFile.ABI }
+                ?.identifier ?: "universal"
+            output.outputFileName =
+                "Lampa_${versionName}-fdroid_${abi}.apk"
+        }
+    }
 }
 
 dependencies {
@@ -159,7 +173,8 @@ dependencies {
     // AAR не в git (~73MB, libs/ в .gitignore): его кладёт
     // scripts/fetch-libbox.sh (пин версии — app/android/libbox.version),
     // вызывается из build-local-apk.sh и CI (ci.yml → "Fetch sing-box-lx core").
-    implementation(files("libs/libbox.aar"))
+    // Custom .29 + minimal XHTTP/H2 ClientConn kill-guard (no diag hooks), all ABIs.
+    implementation(files("libs/libbox-1.14.0-lx.29-custom-h2clean-all.aar"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

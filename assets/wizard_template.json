@@ -394,7 +394,7 @@
       "find_process": true,
       "default_domain_resolver": "@dns_default_domain_resolver",
       "rules": [],
-      "final": "vpn-1",
+      "final": "@priority_route_final",
       "auto_detect_interface": "@auto_detect_interface"
     },
     "experimental": {
@@ -417,6 +417,7 @@
         {"name": "quic_tcp_fallback", "type": "bool", "default_value": "true", "wizard_ui": "edit", "title": "Force stable HTTPS over TCP", "tooltip": "Reject only QUIC on UDP port 443 so browsers immediately retry websites over HTTPS/TCP. DNS, calls, games and all other UDP remain enabled."},
         {"name": "priority_p5_plus_active", "type": "bool", "default_value": "false", "wizard_ui": "hidden", "title": "Priority routing tier"},
         {"name": "priority_proxy_outbound", "type": "outbound", "default_value": "vpn-1", "wizard_ui": "hidden", "title": "Priority routing proxy"},
+        {"name": "priority_route_final", "type": "outbound", "default_value": "direct-out", "wizard_ui": "hidden", "title": "Priority routing final outbound"},
         { "name": "sniff_timeout", "type": "enum", "wizard_ui": "edit", "title": "Sniff timeout", "tooltip": "How long to wait for the domain to appear in the packet before giving up.",
           "default_value": "300ms",
           "options": ["100ms", "300ms", "500ms", "1s", "3s"]
@@ -443,6 +444,9 @@
         {"tag": "roscom-twitch-ads", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/twitch-ads.srs"},
         {"tag": "roscom-youtube", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/youtube.srs"},
         {"tag": "roscom-telegram", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/telegram.srs"},
+        {"tag": "refilter-domains", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-domain-refilter_domains.srs"},
+        {"tag": "refilter-ips", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-ip-refilter_ipsum.srs"},
+        {"tag": "roscom-geoblock-ru", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/category-geoblock-ru.srs"},
         {"tag": "roscom-win-spy", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/win-spy.srs"},
         {"tag": "roscom-torrent", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/torrent.srs"},
         {"tag": "roscom-category-ads", "type": "remote", "format": "binary", "update_interval": "24h", "url": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite@release/sing-box/category-ads.srs"},
@@ -465,7 +469,7 @@
         {"rule_set": ["roscom-win-spy", "roscom-torrent", "roscom-category-ads"], "action": "reject"},
         {"#if": {"and": ["@priority_p5_plus_active"], "value": {"rule_set": ["roscom-sber", "roscom-tbank"], "outbound": "@priority_proxy_outbound"}}},
         {"#if": {"and": ["@priority_p5_plus_active"], "value": {"rule_set": "roscom-whitelist", "outbound": "direct-out"}}},
-        {"#if": {"and": [{"#not": "@priority_p5_plus_active"}], "value": {"rule_set": ["roscom-google-play", "roscom-github", "roscom-twitch-ads", "roscom-youtube", "roscom-telegram"], "outbound": "@priority_proxy_outbound"}}},
+        {"#if": {"and": [{"#not": "@priority_p5_plus_active"}], "value": {"rule_set": ["refilter-domains", "refilter-ips", "roscom-geoblock-ru", "roscom-google-play", "roscom-github", "roscom-twitch-ads", "roscom-youtube", "roscom-telegram"], "outbound": "@priority_proxy_outbound"}}},
         {"#if": {"and": [{"#not": "@priority_p5_plus_active"}], "value": {"rule_set": ["roscom-private", "roscom-category-ru", "roscom-whitelist", "roscom-microsoft", "roscom-apple", "roscom-epicgames", "roscom-riot", "roscom-escapefromtarkov", "roscom-steam", "roscom-twitch", "roscom-pinterest", "roscom-faceit", "roscom-ip-private", "roscom-ip-direct"], "outbound": "direct-out"}}},
         {"#if": {"and": ["@hijack_dns_enabled"], "value": {"protocol": "dns", "action": "hijack-dns"}}},
         {"#if": {"and": ["@resolve_enabled"], "value": {
