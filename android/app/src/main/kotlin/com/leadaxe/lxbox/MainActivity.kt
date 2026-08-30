@@ -300,7 +300,10 @@ class MainActivity : FlutterActivity() {
     /// later; set it natively so the name is Lampa even before the first frame.
     private fun setLampaTaskDescription() {
         val label = getString(R.string.app_name)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        // TaskDescription.Builder exists only since API 33. Referencing it on
+        // Android 10-12 crashes MainActivity during startup with
+        // NoClassDefFoundError before Flutter can draw its first frame.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             setTaskDescription(
                 ActivityManager.TaskDescription.Builder().setLabel(label).build()
             )

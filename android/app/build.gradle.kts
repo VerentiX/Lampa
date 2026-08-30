@@ -123,9 +123,10 @@ android {
         }
     }
 
-    // Android Studio / `flutter build apk --release`: emit small per-ABI APKs
-    // and one universal fallback. Keep Debug as a single APK so Run/Debug can
-    // install it without asking which output to use.
+    // Android Studio / `flutter build apk --release`: emit phone-only APKs
+    // and one universal fallback containing ARMv7 + ARM64. x86_64 is useful
+    // only for emulators and unnecessarily inflates release artifacts.
+    // Keep Debug as a single APK so Run/Debug can still target an emulator.
     val buildingRelease = gradle.startParameter.taskNames.any {
         it.contains("release", ignoreCase = true)
     }
@@ -133,8 +134,19 @@ android {
         abi {
             isEnable = buildingRelease && abiFilterEnv.isNullOrBlank()
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            include("armeabi-v7a", "arm64-v8a")
             isUniversalApk = true
+        }
+    }
+
+    // AGP's universal split can still copy native libraries for ABIs embedded
+    // in dependency AARs even when that ABI is not listed above. Exclude the
+    // emulator-only libraries explicitly from release packaging; debug keeps
+    // them so Android Studio can continue to Run on an x86/x86_64 emulator.
+    if (buildingRelease && abiFilterEnv.isNullOrBlank()) {
+        packaging {
+            jniLibs.excludes += "lib/x86/**"
+            jniLibs.excludes += "lib/x86_64/**"
         }
     }
 
