@@ -233,7 +233,7 @@
       "chapter": "internal",
       "description": "Internal globals referenced by presets — not shown as VPN settings.",
       "vars": [
-        {"name": "resolve_enabled", "type": "bool", "default_value": "true", "wizard_ui": "edit", "title": "Resolve destination IP", "tooltip": "Resolve the sniffed domain to an IP before routing, so GeoIP and IP rules can match. Turn off when using FakeIP — the fake IP already carries the domain, and a real lookup here would bypass FakeIP and can fail on a broken resolver."},
+        {"name": "resolve_enabled", "type": "bool", "default_value": "true", "wizard_ui": "hidden", "title": "Resolve destination IP", "tooltip": "Always enabled in Lampa so domain and IP routing rules both apply."},
         { "name": "resolve_strategy", "type": "enum", "wizard_ui": "edit", "title": "Resolve strategy", "tooltip": "IP version preference for DNS resolution",
           "default_value": "ipv4_only",
           "options": ["prefer_ipv4", "prefer_ipv6", "ipv4_only", "ipv6_only"]

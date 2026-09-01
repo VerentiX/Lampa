@@ -859,8 +859,6 @@ class _LampaHomeState extends State<LampaHome> {
   Future<void> _showNetworkSettings() async {
     var dns = await SettingsStorage.getVar('dns_final', 'cloudflare_doh');
     if (dns != 'google_doh') dns = 'cloudflare_doh';
-    final resolve = await SettingsStorage.getVar('resolve_enabled', 'true');
-    var asIs = resolve != 'true';
     if (!mounted) return;
     final applied = await showModalBottomSheet<bool>(
       context: context,
@@ -914,32 +912,12 @@ class _LampaHomeState extends State<LampaHome> {
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
                       child: Text(
-                        'Стратегия резолва',
+                        'Маршрутизация по доменам и IP включена автоматически.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0x99ffffff),
                         ),
                       ),
-                    ),
-                    RadioListTile<bool>(
-                      value: true,
-                      groupValue: asIs,
-                      activeColor: const Color(0xffff8f00),
-                      title: const Text('AsIs'),
-                      subtitle: const Text(
-                        'Облегчённая — только домен, без резолва IP.',
-                      ),
-                      onChanged: (v) => setSheet(() => asIs = v!),
-                    ),
-                    RadioListTile<bool>(
-                      value: false,
-                      groupValue: asIs,
-                      activeColor: const Color(0xffff8f00),
-                      title: const Text('IPIfNonMatch'),
-                      subtitle: const Text(
-                        'Усиленная — если домен не совпал, резолв IP.',
-                      ),
-                      onChanged: (v) => setSheet(() => asIs = v!),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -959,7 +937,7 @@ class _LampaHomeState extends State<LampaHome> {
     );
     if (applied != true) return;
     await SettingsStorage.setVar('dns_final', dns, flush: false);
-    await SettingsStorage.setVar('resolve_enabled', asIs ? 'false' : 'true');
+    await SettingsStorage.setVar('resolve_enabled', 'true');
     await widget.onNetworkSettingsChanged?.call();
     if (!mounted) return;
     ScaffoldMessenger.of(

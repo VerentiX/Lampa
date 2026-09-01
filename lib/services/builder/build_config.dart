@@ -152,6 +152,13 @@ Future<BuildResult> buildConfig({
     vars.putIfAbsent(e.key, () => e.value);
   }
 
+  // Lampa routing depends on both domain and IP rule-sets.  Keeping the old
+  // AsIs switch allowed a persisted `resolve_enabled=false` to bypass every
+  // IP rule (notably Telegram's raw DC addresses) and fall through to direct.
+  // IPIfNonMatch is therefore a product invariant, including for users
+  // upgrading with the stale value already stored.
+  vars['resolve_enabled'] = 'true';
+
   // §122 Фаза 1b — clash_api БОЛЬШЕ НЕ инжектится: ядро rc.3 собрано без
   // with_clash_api (server вырезан, §1a), и блок experimental.clash_api в конфиге
   // даёт ФАТАЛЬНЫЙ отказ старта ("clash api is not included in this build").
