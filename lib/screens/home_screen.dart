@@ -1450,7 +1450,10 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _applyPriorityRouting(PriorityRoutingDecision decision) async {
     if (!mounted) return;
     final nextTier = decision.p5Plus ? 'true' : 'false';
-    final nextFinal = decision.p5Plus ? 'vpn-1' : 'direct-out';
+    // FULL Roscom policy for P0-P4: explicit RU/private allow-list rules go
+    // direct, while every unmatched destination falls back to the currently
+    // active primary-tier balancer. P5+ keeps its existing whitelist policy.
+    final nextFinal = decision.p5Plus ? 'vpn-1' : decision.proxyOutbound;
     final oldTier = await SettingsStorage.getVar(
       'priority_p5_plus_active',
       'false',
@@ -1461,7 +1464,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
     final oldFinal = await SettingsStorage.getVar(
       'priority_route_final',
-      'direct-out',
+      'vpn-1',
     );
     if (oldTier == nextTier &&
         oldOutbound == decision.proxyOutbound &&

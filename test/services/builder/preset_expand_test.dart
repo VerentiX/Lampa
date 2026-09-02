@@ -1133,14 +1133,14 @@ void main() {
   // `rules` → пресет молча терял все правила (ни warning, ни route.rules),
   // синтетические тесты этого не ловили.
   group('§246 e2e — реальный wizard_template.json', () {
-    test('route.final: P0-P4 direct, P5+ keeps vpn-1', () {
+    test('route.final: P0-P4 FULL and P5+ both use a VPN outbound', () {
       final raw = File('assets/wizard_template.json').readAsStringSync();
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final config = json['config'] as Map<String, dynamic>;
 
       final p4 =
           substituteVars(jsonDecode(jsonEncode(config)), const {
-                'priority_route_final': 'direct-out',
+                'priority_route_final': 'tier-s0000',
               })
               as Map<String, dynamic>;
       final p5 =
@@ -1149,7 +1149,7 @@ void main() {
               })
               as Map<String, dynamic>;
 
-      expect((p4['route'] as Map)['final'], 'direct-out');
+      expect((p4['route'] as Map)['final'], 'tier-s0000');
       expect((p5['route'] as Map)['final'], 'vpn-1');
     });
 
@@ -1206,6 +1206,43 @@ void main() {
         preset,
         srsPaths: cached,
       );
+      final blockIndex = p4.routingRules.indexWhere(
+        (r) => const DeepCollectionEquality().equals(r['rule_set'], [
+          'roscom-win-spy',
+          'roscom-torrent',
+          'roscom-category-ads',
+        ]),
+      );
+      final proxyIndex = p4.routingRules.indexWhere(
+        (r) => const DeepCollectionEquality().equals(r['rule_set'], [
+          'roscom-google-play',
+          'roscom-github',
+          'roscom-twitch-ads',
+          'roscom-youtube',
+          'roscom-telegram',
+        ]),
+      );
+      final directIndex = p4.routingRules.indexWhere(
+        (r) => const DeepCollectionEquality().equals(r['rule_set'], [
+          'roscom-private',
+          'roscom-category-ru',
+          'roscom-whitelist',
+          'roscom-microsoft',
+          'roscom-apple',
+          'roscom-epicgames',
+          'roscom-riot',
+          'roscom-escapefromtarkov',
+          'roscom-steam',
+          'roscom-twitch',
+          'roscom-pinterest',
+          'roscom-faceit',
+          'roscom-ip-private',
+          'roscom-ip-direct',
+        ]),
+      );
+      expect(blockIndex, greaterThanOrEqualTo(0));
+      expect(proxyIndex, greaterThan(blockIndex));
+      expect(directIndex, greaterThan(proxyIndex));
       expect(
         p4.routingRules.any(
           (r) =>
@@ -1221,9 +1258,9 @@ void main() {
               r['outbound'] == 'vpn-1' &&
               r['rule_set'] is List &&
               (r['rule_set'] as List).contains('roscom-youtube') &&
-              (r['rule_set'] as List).contains('refilter-domains') &&
-              (r['rule_set'] as List).contains('refilter-ips') &&
-              (r['rule_set'] as List).contains('roscom-geoblock-ru'),
+              !(r['rule_set'] as List).contains('refilter-domains') &&
+              !(r['rule_set'] as List).contains('refilter-ips') &&
+              !(r['rule_set'] as List).contains('roscom-geoblock-ru'),
         ),
         isTrue,
       );
