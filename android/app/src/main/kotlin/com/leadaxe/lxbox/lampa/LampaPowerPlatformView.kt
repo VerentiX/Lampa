@@ -3,6 +3,7 @@ package com.leadaxe.lxbox.lampa
 import android.content.Context
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import com.leadaxe.lxbox.R
@@ -46,6 +47,12 @@ private class LampaPowerPlatformView(
     private var lastConnected: Boolean? = if (connected) true else if (connecting) false else false
 
     init {
+        // Flutter owns the TV/D-pad focus for this PlatformView. If the native
+        // FrameLayout takes it, DPAD_CENTER never reaches RemoteButton.
+        root.isFocusable = false
+        root.isFocusableInTouchMode = false
+        root.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        root.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         root.clipChildren = false
         root.clipToPadding = false
         glow.setBackgroundResource(R.drawable.bg_power_glow)
@@ -57,6 +64,8 @@ private class LampaPowerPlatformView(
         )
         button.elevation = dp(10).toFloat()
         button.isClickable = true
+        button.isFocusable = false
+        button.isFocusableInTouchMode = false
         button.setOnClickListener { channel.invokeMethod("tap", null) }
 
         content.setPadding(dp(9), dp(9), dp(9), dp(9))

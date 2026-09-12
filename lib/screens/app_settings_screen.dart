@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../main.dart';
+import '../main.dart' show applyAllowRotationSetting;
 import '../services/debug/bootstrap.dart';
 import '../services/debug/transport/server.dart';
 import '../services/haptic_service.dart';
@@ -42,7 +42,8 @@ class AppSettingsScreen extends StatefulWidget {
   State<AppSettingsScreen> createState() => _AppSettingsScreenState();
 }
 
-class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindingObserver {
+class _AppSettingsScreenState extends State<AppSettingsScreen>
+    with WidgetsBindingObserver {
   final _vpn = BoxVpnClient();
   bool _autoStart = false;
   bool _haptic = true;
@@ -153,24 +154,34 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
     final debugEnabled = await SettingsStorage.getDebugEnabled();
     final debugToken = await SettingsStorage.getDebugToken();
     final debugPort = await SettingsStorage.getDebugPort();
-    final coreLogsEnabled =
-        await SettingsStorage.getNativeBool(NativePrefsKeys.coreLogsEnabled);
+    final coreLogsEnabled = await SettingsStorage.getNativeBool(
+      NativePrefsKeys.coreLogsEnabled,
+    );
     final configLocked = await SettingsStorage.getConfigLockedForDebug();
     final autoRecordWifi = await SettingsStorage.getAutoRecordWifi();
-    final userAgent =
-        await SettingsStorage.getVar(SubscriptionIdentity.varUserAgent, '');
+    final userAgent = await SettingsStorage.getVar(
+      SubscriptionIdentity.varUserAgent,
+      '',
+    );
     final sendHwid =
-        (await SettingsStorage.getVar(SubscriptionIdentity.varSendHwid,
-            'false')) ==
-            'true';
-    final hwid =
-        await SettingsStorage.getVar(SubscriptionIdentity.varHwid, '');
-    final deviceOs =
-        await SettingsStorage.getVar(SubscriptionIdentity.varDeviceOs, '');
-    final verOs =
-        await SettingsStorage.getVar(SubscriptionIdentity.varVerOs, '');
-    final deviceModel =
-        await SettingsStorage.getVar(SubscriptionIdentity.varDeviceModel, '');
+        (await SettingsStorage.getVar(
+          SubscriptionIdentity.varSendHwid,
+          'false',
+        )) ==
+        'true';
+    final hwid = await SettingsStorage.getVar(SubscriptionIdentity.varHwid, '');
+    final deviceOs = await SettingsStorage.getVar(
+      SubscriptionIdentity.varDeviceOs,
+      '',
+    );
+    final verOs = await SettingsStorage.getVar(
+      SubscriptionIdentity.varVerOs,
+      '',
+    );
+    final deviceModel = await SettingsStorage.getVar(
+      SubscriptionIdentity.varDeviceModel,
+      '',
+    );
     if (mounted) {
       setState(() {
         _userAgent = userAgent;
@@ -213,9 +224,15 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(locked
-            ? getLocalText.s("Config locked. UI actions will not rebuild config.")
-            : getLocalText.s("Config unlocked. Next UI action will rebuild from settings.")),
+        content: Text(
+          locked
+              ? getLocalText.s(
+                  "Config locked. UI actions will not rebuild config.",
+                )
+              : getLocalText.s(
+                  "Config unlocked. Next UI action will rebuild from settings.",
+                ),
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -270,8 +287,10 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
     if (port == null ||
         port < SettingsStorage.debugPortMin ||
         port > SettingsStorage.debugPortMax) {
-      setState(() => _debugPortError =
-          'port must be ${SettingsStorage.debugPortMin}..${SettingsStorage.debugPortMax}');
+      setState(
+        () => _debugPortError =
+            'port must be ${SettingsStorage.debugPortMin}..${SettingsStorage.debugPortMax}',
+      );
       return;
     }
     if (port == _debugPort) {
@@ -297,11 +316,15 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
     setState(() => _coreLogsEnabled = enable);
     // §189 — через NativePrefs (JSON-истина + зеркало в native).
     await SettingsStorage.setNativeBool(
-        NativePrefsKeys.coreLogsEnabled, enable);
+      NativePrefsKeys.coreLogsEnabled,
+      enable,
+    );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(getLocalText.s("Saved. Force-stop & reopen app to apply.")),
+        content: Text(
+          getLocalText.s("Saved. Force-stop & reopen app to apply."),
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -339,10 +362,12 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
         'Your Android version doesn\'t support an in-app prompt. '
             'Pull down the status bar → edit tiles → drag L×Box to active tiles.',
       'no_activity' => 'Cannot show prompt right now — try again.',
-      _ => 'Could not request tile add ($result). '
+      _ =>
+        'Could not request tile add ($result). '
             'Pull down the status bar → edit tiles → drag L×Box manually.',
     };
-    final duration = (result == 'unsupported' ||
+    final duration =
+        (result == 'unsupported' ||
             result.startsWith('error') ||
             result == 'no_activity')
         ? const Duration(seconds: 6)
@@ -418,8 +443,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
   ///             runtime prompt бесполезен на API 30+, dialog покажет
   ///             только «Open Settings»).
   Future<void> _onBackgroundLocationTap() async {
-    final granted =
-        await ul.UrlLauncher.checkBackgroundLocationPermission();
+    final granted = await ul.UrlLauncher.checkBackgroundLocationPermission();
     if (granted) {
       await ul.UrlLauncher.openAppSettings();
       return;
@@ -429,8 +453,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
       context,
       missing: const ['android.permission.ACCESS_BACKGROUND_LOCATION'],
     );
-    final after =
-        await ul.UrlLauncher.checkBackgroundLocationPermission();
+    final after = await ul.UrlLauncher.checkBackgroundLocationPermission();
     if (mounted) setState(() => _backgroundLocationGranted = after);
   }
 
@@ -448,7 +471,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
       // rebuild корневого MaterialApp его не перестраивает (Navigator держит
       // route поверх). Без подписки смена языка не двигала radio-галку picker'а
       // и не перерисовывала строки самого экрана настроек.
-      animation: Listenable.merge([themeNotifier, LocaleController.I]),
+      animation: LocaleController.I,
       builder: (context, _) {
         return DefaultTabController(
           length: 4,
@@ -480,7 +503,11 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
   }
 
   EdgeInsets _tabPadding(BuildContext context) => EdgeInsets.fromLTRB(
-      12, 12, 12, MediaQuery.of(context).padding.bottom + 24);
+    12,
+    12,
+    12,
+    MediaQuery.of(context).padding.bottom + 24,
+  );
 
   // ─── §118 subscription fetch identity (UA override + HWID + meta) ──────
 
@@ -545,8 +572,9 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
       SubscriptionIdentity.apply(hwid: _hwid);
     }
     setState(() => _sendHwid = val);
-    unawaited(SettingsStorage.setVar(
-        SubscriptionIdentity.varSendHwid, val.toString()));
+    unawaited(
+      SettingsStorage.setVar(SubscriptionIdentity.varSendHwid, val.toString()),
+    );
     SubscriptionIdentity.apply(sendHwid: val);
   }
 
@@ -654,7 +682,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
         setState(() => _autoStart = val);
         // §189 — через NativePrefs (JSON-истина + зеркало в native).
         unawaited(
-            SettingsStorage.setNativeBool(NativePrefsKeys.autoStart, val));
+          SettingsStorage.setNativeBool(NativePrefsKeys.autoStart, val),
+        );
       },
       onAllowRotationChanged: (val) => unawaited(_toggleAllowRotation(val)),
       // §338 — автоприменение изменений конфига (любой источник, не подписки).
@@ -668,21 +697,22 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
       },
       onAutoPingChanged: (val) {
         setState(() => _autoPing = val);
-        unawaited(SettingsStorage.setVar(
-            'auto_ping_on_start', val.toString()));
+        unawaited(SettingsStorage.setVar('auto_ping_on_start', val.toString()));
       },
       onHapticChanged: (val) {
         setState(() => _haptic = val);
         HapticService.I.enabled = val;
-        unawaited(SettingsStorage.setVar(HapticService.prefsKey, val.toString()));
+        unawaited(
+          SettingsStorage.setVar(HapticService.prefsKey, val.toString()),
+        );
         if (val) {
           HapticService.I.onConnectTap();
         }
       },
       onAddQuickSettingsTile: () => unawaited(_addQuickSettingsTile()),
-      onOpenBackup: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const BackupScreen()),
-      ),
+      onOpenBackup: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const BackupScreen())),
     );
   }
 
@@ -733,9 +763,13 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> with WidgetsBindi
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 2),
-        content: Text(enabled
-            ? getLocalText.s("Auto-record on. Networks added after 5 min of stay.")
-            : getLocalText.s("Auto-record off. Existing history kept.")),
+        content: Text(
+          enabled
+              ? getLocalText.s(
+                  "Auto-record on. Networks added after 5 min of stay.",
+                )
+              : getLocalText.s("Auto-record off. Existing history kept."),
+        ),
       ),
     );
   }

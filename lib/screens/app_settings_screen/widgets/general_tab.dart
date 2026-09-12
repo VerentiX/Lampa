@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../main.dart';
 import '../../../services/l10n/locale_controller.dart';
 import '../../../services/update_checker.dart';
 import 'update_status_row.dart';
@@ -57,41 +56,18 @@ class GeneralTab extends StatelessWidget {
     return ListView(
       padding: padding,
       children: [
-        Text(getLocalText.s("Appearance"),
-            style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        RadioGroup<ThemeMode>(
-          groupValue: themeNotifier.mode,
-          onChanged: (v) { if (v != null) themeNotifier.setMode(v); },
-          child: Column(
-            children: ThemeMode.values.map((mode) {
-              final label = switch (mode) {
-                ThemeMode.system => 'System',
-                ThemeMode.light => 'Light',
-                ThemeMode.dark => 'Dark',
-              };
-              final icon = switch (mode) {
-                ThemeMode.system => Icons.brightness_auto,
-                ThemeMode.light => Icons.light_mode,
-                ThemeMode.dark => Icons.dark_mode,
-              };
-              return RadioListTile<ThemeMode>(
-                value: mode,
-                title: Text(label),
-                secondary: Icon(icon),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 8),
         // §279 — выбор языка приложения; смена применяется мгновенно через
         // LocaleController (полный пайплайн: ARB + template + rebuild).
-        Text(getLocalText.s("Language"),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          getLocalText.s("Language"),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         RadioGroup<String>(
           groupValue: LocaleController.I.setting,
-          onChanged: (v) { if (v != null) LocaleController.I.set(v); },
+          onChanged: (v) {
+            if (v != null) LocaleController.I.set(v);
+          },
           child: Column(
             children: [
               RadioListTile<String>(
@@ -113,8 +89,10 @@ class GeneralTab extends StatelessWidget {
           ),
         ),
         const Divider(height: 32),
-        Text(getLocalText.s("Behavior"),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          getLocalText.s("Behavior"),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         SwitchListTile(
           title: Text(getLocalText.s("Auto-start on boot")),
@@ -127,7 +105,11 @@ class GeneralTab extends StatelessWidget {
         // сразу, без рестарта; уважает системный auto-rotate.
         SwitchListTile(
           title: Text(getLocalText.s("Allow rotation")),
-          subtitle: Text(getLocalText.s("Rotate to landscape when the device turns — handy on tablets. Follows the system auto-rotate setting.")),
+          subtitle: Text(
+            getLocalText.s(
+              "Rotate to landscape when the device turns — handy on tablets. Follows the system auto-rotate setting.",
+            ),
+          ),
           secondary: const Icon(Icons.screen_rotation),
           value: allowRotation,
           onChanged: loaded ? onAllowRotationChanged : null,
@@ -137,7 +119,11 @@ class GeneralTab extends StatelessWidget {
         // routing, per-app), поэтому живёт в Behavior, а не в Subscriptions.
         SwitchListTile(
           title: Text(getLocalText.s("Auto-restart VPN on settings change")),
-          subtitle: Text(getLocalText.s("Apply every config change to the running tunnel by itself, so no banner is left to tap. Each apply drops the tunnel for about 3 seconds and kills open connections.")),
+          subtitle: Text(
+            getLocalText.s(
+              "Apply every config change to the running tunnel by itself, so no banner is left to tap. Each apply drops the tunnel for about 3 seconds and kills open connections.",
+            ),
+          ),
           secondary: const Icon(Icons.restart_alt),
           value: autoReloadOnChange,
           onChanged: loaded ? onAutoReloadOnChangeChanged : null,
@@ -145,7 +131,9 @@ class GeneralTab extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
-            getLocalText.s("While this is on, the per-subscription \"On update\" setting is hidden — everything is applied immediately. Turning it off brings each subscription's own choice back."),
+            getLocalText.s(
+              "While this is on, the per-subscription \"On update\" setting is hidden — everything is applied immediately. Turning it off brings each subscription's own choice back.",
+            ),
             style: TextStyle(
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -153,13 +141,19 @@ class GeneralTab extends StatelessWidget {
           ),
         ),
         const Divider(height: 32),
-        Text(getLocalText.s("Quick connect"),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          getLocalText.s("Quick connect"),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         ListTile(
           leading: const Icon(Icons.dashboard_customize_outlined),
           title: Text(getLocalText.s("Quick Settings tile")),
-          subtitle: Text(getLocalText.s("Add to status-bar shade for one-tap toggle. Android 13+ shows a system prompt; on older versions edit the shade manually.")),
+          subtitle: Text(
+            getLocalText.s(
+              "Add to status-bar shade for one-tap toggle. Android 13+ shows a system prompt; on older versions edit the shade manually.",
+            ),
+          ),
           trailing: TextButton(
             onPressed: onAddQuickSettingsTile,
             child: Text(getLocalText.s("Add")),
@@ -168,16 +162,26 @@ class GeneralTab extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.touch_app_outlined),
           title: Text(getLocalText.s("Home-screen shortcut")),
-          subtitle: Text(getLocalText.s("Long-press the L×Box icon on your home screen → choose \"Toggle VPN\".")),
+          subtitle: Text(
+            getLocalText.s(
+              "Long-press the L×Box icon on your home screen → choose \"Toggle VPN\".",
+            ),
+          ),
         ),
         if (UpdateChecker.enabled) ...[
           const Divider(height: 32),
-          Text(getLocalText.s("Updates"),
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            getLocalText.s("Updates"),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           SwitchListTile(
             title: Text(getLocalText.s("Check for updates on launch")),
-            subtitle: Text(getLocalText.s("Pings github.com once a day to check for new releases. \"View\" opens the release page in browser; install is manual.")),
+            subtitle: Text(
+              getLocalText.s(
+                "Pings github.com once a day to check for new releases. \"View\" opens the release page in browser; install is manual.",
+              ),
+            ),
             secondary: const Icon(Icons.system_update_alt),
             value: autoCheckUpdates,
             onChanged: loaded ? onAutoCheckUpdatesChanged : null,
@@ -185,31 +189,47 @@ class GeneralTab extends StatelessWidget {
           const UpdateStatusRow(),
         ],
         const Divider(height: 32),
-        Text(getLocalText.s("Feedback"),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          getLocalText.s("Feedback"),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         SwitchListTile(
           title: Text(getLocalText.s("Auto-ping after connect")),
-          subtitle: Text(getLocalText.s("Ping nodes of active group 5s after VPN starts (once per connect)")),
+          subtitle: Text(
+            getLocalText.s(
+              "Ping nodes of active group 5s after VPN starts (once per connect)",
+            ),
+          ),
           secondary: const Icon(Icons.network_ping),
           value: autoPing,
           onChanged: loaded ? onAutoPingChanged : null,
         ),
         SwitchListTile(
           title: Text(getLocalText.s("Haptic feedback")),
-          subtitle: Text(getLocalText.s("Vibrate on connect, disconnect and errors. Respects system \"Touch feedback\" setting")),
+          subtitle: Text(
+            getLocalText.s(
+              "Vibrate on connect, disconnect and errors. Respects system \"Touch feedback\" setting",
+            ),
+          ),
           secondary: const Icon(Icons.vibration),
           value: haptic,
           onChanged: loaded ? onHapticChanged : null,
         ),
         const Divider(height: 32),
-        Text(getLocalText.s("Backup & restore"),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          getLocalText.s("Backup & restore"),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         ListTile(
           leading: const Icon(Icons.import_export),
           title: Text(getLocalText.s("Backup & restore")),
-          subtitle: Text(getLocalText.s("Export subscriptions, routing setup and preferences as JSON.")),
+          subtitle: Text(
+            getLocalText.s(
+              "Export subscriptions, routing setup and preferences as JSON.",
+            ),
+          ),
           trailing: const Icon(Icons.chevron_right),
           contentPadding: EdgeInsets.zero,
           onTap: onOpenBackup,

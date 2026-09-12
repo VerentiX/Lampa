@@ -842,14 +842,19 @@ class _LampaHomeState extends State<LampaHome> {
 
   Future<void> _manualImport() async {
     final controller = TextEditingController();
-    final text = await LampaUi.dialog<String>(
+    final inputFocus = FocusNode(debugLabel: 'subscription-url');
+    final dialog = LampaUi.dialog<String>(
       context: context,
       title: const Text('Добавить подписку'),
       content: TextField(
         controller: controller,
+        focusNode: inputFocus,
         minLines: 3,
         maxLines: 8,
         autofocus: true,
+        keyboardType: TextInputType.url,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (value) => Navigator.pop(context, value.trim()),
         style: const TextStyle(color: LampaUi.onSurface),
         decoration: const InputDecoration(
           hintText: 'Вставьте ссылку подписки Хаттабыч',
@@ -868,6 +873,13 @@ class _LampaHomeState extends State<LampaHome> {
         ),
       ],
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      inputFocus.requestFocus();
+      await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    });
+    final text = await dialog;
+    inputFocus.dispose();
     controller.dispose();
     if (text != null && text.isNotEmpty) await widget.onImportText(text);
   }
@@ -1092,17 +1104,16 @@ class _LampaHomeState extends State<LampaHome> {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    tooltip: 'Действия',
+                  RemotePopupMenuButton<String>(
+                    label: 'Действия с подпиской',
                     color: LampaUi.bg,
-                    padding: EdgeInsets.zero,
                     icon: const Icon(
                       Icons.more_horiz,
                       color: LampaUi.accent,
                       size: 20,
                     ),
                     onSelected: (action) => _onSubMenuAction(action, entry),
-                    itemBuilder: (_) => const [
+                    itemBuilder: (_) => const <PopupMenuEntry<String>>[
                       PopupMenuItem(
                         value: 'copy',
                         child: Text('Скопировать ссылку'),

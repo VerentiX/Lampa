@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/home_screen.dart';
 import 'services/app_log.dart';
@@ -210,42 +209,6 @@ class _FallbackErrorWidget extends StatelessWidget {
   }
 }
 
-/// Global theme notifier — allows changing theme from anywhere.
-class ThemeNotifier extends ChangeNotifier {
-  ThemeNotifier() {
-    _load();
-  }
-
-  ThemeMode _mode = ThemeMode.system;
-  ThemeMode get mode => _mode;
-
-  static const _key = 'app_theme_mode';
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString(_key);
-    _mode = switch (stored) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
-    notifyListeners();
-  }
-
-  Future<void> setMode(ThemeMode mode) async {
-    _mode = mode;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, switch (mode) {
-      ThemeMode.light => 'light',
-      ThemeMode.dark => 'dark',
-      ThemeMode.system => 'system',
-    });
-  }
-}
-
-final themeNotifier = ThemeNotifier();
-
 class LxBoxApp extends StatelessWidget {
   const LxBoxApp({super.key});
 
@@ -253,11 +216,17 @@ class LxBoxApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // §279 — merged Listenable: смена локали = механизм themeNotifier
-    // (rebuild единственного MaterialApp, без remount и подъёма контроллеров).
     return AnimatedBuilder(
-      animation: Listenable.merge([themeNotifier, LocaleController.I]),
+      animation: LocaleController.I,
       builder: (context, _) {
+        final lampaTheme = ThemeData(
+          focusColor: const Color(0x88ffcc33),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: _seed,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+        );
         // §285 — getLocalText отслеживает применяемую локаль через
         // LocaleController._applyLocale (dict-reload на каждую смену); отдельного
         // per-build присваивания активного локализатора не требуется.
@@ -276,20 +245,9 @@ class LxBoxApp extends StatelessWidget {
                 const ActivateIntent(),
           },
           title: 'Lampa',
-          theme: ThemeData(
-            focusColor: const Color(0x88ffcc33),
-            colorScheme: ColorScheme.fromSeed(seedColor: _seed),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            focusColor: const Color(0x88ffcc33),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: _seed,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
-          themeMode: themeNotifier.mode,
+          theme: lampaTheme,
+          darkTheme: lampaTheme,
+          themeMode: ThemeMode.dark,
           // §279 — ВСЕГДА подаём явную локаль (effective уже резолвит
           // 'system' по языку устройства через PlatformDispatcher). Ранее
           // 'system' давал locale: null, и Flutter полагался на собственный
