@@ -182,6 +182,17 @@ class MainActivity : FlutterActivity() {
                         // §375 — есть ли камера (для QR-сканера).
                         result.success(hasCamera())
                     }
+                    "isTelevision" -> {
+                        val uiMode = getSystemService(android.content.Context.UI_MODE_SERVICE)
+                            as? android.app.UiModeManager
+                        result.success(
+                            uiMode?.currentModeType ==
+                                android.content.res.Configuration.UI_MODE_TYPE_TELEVISION ||
+                                packageManager.hasSystemFeature(
+                                    android.content.pm.PackageManager.FEATURE_LEANBACK,
+                                )
+                        )
+                    }
                     "canSaveToDownloads" -> {
                         // §374 — MediaStore-запись в Downloads без разрешений
                         // доступна с API 29 (scoped storage).

@@ -71,6 +71,7 @@ class _LampaHomeState extends State<LampaHome> {
   String _splitSummary = 'Все приложения через VPN';
   String _rulesSummary = 'Свои домены через VPN или мимо';
   String? _expandedSubId;
+  bool _isTelevision = false;
 
   List<SubscriptionEntry> get _urlSubs =>
       widget.subscriptions.where((e) => e.url.isNotEmpty).toList();
@@ -205,6 +206,14 @@ class _LampaHomeState extends State<LampaHome> {
     _syncConnectionRemark();
     LampaDownloadProgress.I.addListener(_onDownloadProgress);
     LampaAutoUpdates.I.start();
+    _detectTelevision();
+  }
+
+  Future<void> _detectTelevision() async {
+    final value = await UrlLauncher.isTelevision();
+    if (mounted && value != _isTelevision) {
+      setState(() => _isTelevision = value);
+    }
   }
 
   @override
@@ -349,6 +358,9 @@ class _LampaHomeState extends State<LampaHome> {
                           offset: const Offset(0, 18),
                           child: RemoteButton(
                             autofocus: true,
+                            focusableWhenDisabled: true,
+                            circularFocus: true,
+                            showFocusHighlight: _isTelevision,
                             label: up ? 'Отключить VPN' : 'Подключить VPN',
                             onPressed: _working ? null : widget.onToggle,
                             child: IgnorePointer(
@@ -1104,35 +1116,17 @@ class _LampaHomeState extends State<LampaHome> {
                       ],
                     ),
                   ),
-                  RemotePopupMenuButton<String>(
-                    label: 'Действия с подпиской',
-                    color: LampaUi.bg,
-                    icon: const Icon(
-                      Icons.more_horiz,
-                      color: LampaUi.accent,
-                      size: 20,
-                    ),
-                    onSelected: (action) => _onSubMenuAction(action, entry),
-                    itemBuilder: (_) => const <PopupMenuEntry<String>>[
-                      PopupMenuItem(
-                        value: 'copy',
-                        child: Text('Скопировать ссылку'),
-                      ),
-                      PopupMenuItem(
-                        value: 'refresh',
-                        child: Text('Обновить подписку'),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Удалить подписку'),
-                      ),
-                    ],
-                  ),
+                  if (!_isTelevision) _subscriptionMenu(entry),
                   const SizedBox(width: 4),
                 ],
               ),
             ),
           ),
+          if (_isTelevision)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+              child: _subscriptionMenu(entry, expanded: true),
+            ),
           AnimatedSize(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
@@ -1147,6 +1141,35 @@ class _LampaHomeState extends State<LampaHome> {
       ),
     );
   }
+
+  Widget _subscriptionMenu(SubscriptionEntry entry, {bool expanded = false}) =>
+      RemotePopupMenuButton<String>(
+        label: 'Действия с подпиской',
+        color: LampaUi.bg,
+        icon: const Icon(Icons.more_horiz, color: LampaUi.accent, size: 20),
+        expandedChild: expanded
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.more_horiz, color: LampaUi.accent, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Действия подписки',
+                    style: LampaUi.mono.copyWith(
+                      color: LampaUi.link,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              )
+            : null,
+        onSelected: (action) => _onSubMenuAction(action, entry),
+        itemBuilder: (_) => const <PopupMenuEntry<String>>[
+          PopupMenuItem(value: 'copy', child: Text('Скопировать ссылку')),
+          PopupMenuItem(value: 'refresh', child: Text('Обновить подписку')),
+          PopupMenuItem(value: 'delete', child: Text('Удалить подписку')),
+        ],
+      );
 
   Future<void> _onSubMenuAction(String action, SubscriptionEntry entry) async {
     switch (action) {

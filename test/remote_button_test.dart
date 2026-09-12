@@ -91,6 +91,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('busy power control remains in the focus traversal', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: RemoteButton(
+            autofocus: true,
+            focusableWhenDisabled: true,
+            circularFocus: true,
+            child: SizedBox(width: 100, height: 100),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'remote-button');
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('TV ring can be hidden on phones while focus is retained', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RemoteButton(
+            autofocus: true,
+            circularFocus: true,
+            showFocusHighlight: false,
+            onPressed: () {},
+            child: const SizedBox(width: 100, height: 100),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'remote-button');
+    final animated = tester.widget<AnimatedContainer>(
+      find.descendant(
+        of: find.byType(RemoteButton),
+        matching: find.byType(AnimatedContainer),
+      ),
+    );
+    expect(
+      ((animated.decoration as BoxDecoration).border! as Border).top.color,
+      Colors.transparent,
+    );
+  });
+
   testWidgets('autofocus is acquired when a busy control becomes enabled', (
     tester,
   ) async {
@@ -135,6 +186,45 @@ void main() {
       ),
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    expect(find.text('Copy link'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(selected, 'copy');
+  });
+
+  testWidgets('TV subscription actions are reachable with arrow down', (
+    tester,
+  ) async {
+    String? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              RemoteButton(
+                autofocus: true,
+                onPressed: () {},
+                child: const SizedBox(width: 200, height: 50),
+              ),
+              RemotePopupMenuButton<String>(
+                label: 'Subscription actions',
+                icon: const Icon(Icons.more_horiz),
+                expandedChild: const Text('Subscription actions'),
+                onSelected: (value) => selected = value,
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'copy', child: Text('Copy link')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
     await tester.pumpAndSettle();
     expect(find.text('Copy link'), findsOneWidget);

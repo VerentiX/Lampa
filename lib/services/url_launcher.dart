@@ -130,10 +130,10 @@ class UrlLauncher {
     required String content,
   }) async {
     try {
-      return await _channel.invokeMethod<String>(
-        'saveToDownloads',
-        {'fileName': fileName, 'content': content},
-      );
+      return await _channel.invokeMethod<String>('saveToDownloads', {
+        'fileName': fileName,
+        'content': content,
+      });
     } catch (_) {
       return null;
     }
@@ -156,11 +156,21 @@ class UrlLauncher {
     }
   }
 
+  /// True on Android TV / Google TV and Leanback television devices.
+  static Future<bool> isTelevision() async {
+    try {
+      return await _channel.invokeMethod<bool>('isTelevision') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Checks if POST_NOTIFICATIONS is granted (always true on API < 33).
   static Future<bool> checkNotificationPermission() async {
     try {
-      final granted =
-          await _channel.invokeMethod<bool>('checkNotificationPermission');
+      final granted = await _channel.invokeMethod<bool>(
+        'checkNotificationPermission',
+      );
       return granted ?? true;
     } catch (_) {
       return true;
@@ -183,8 +193,9 @@ class UrlLauncher {
   /// instead of `<unknown ssid>`.
   static Future<bool> checkNearbyWifiPermission() async {
     try {
-      final granted =
-          await _channel.invokeMethod<bool>('checkNearbyWifiPermission');
+      final granted = await _channel.invokeMethod<bool>(
+        'checkNearbyWifiPermission',
+      );
       return granted ?? true;
     } catch (_) {
       return true;
@@ -207,8 +218,9 @@ class UrlLauncher {
   /// rules не сматчатся без этого permission.
   static Future<bool> checkBackgroundLocationPermission() async {
     try {
-      final granted = await _channel
-          .invokeMethod<bool>('checkBackgroundLocationPermission');
+      final granted = await _channel.invokeMethod<bool>(
+        'checkBackgroundLocationPermission',
+      );
       return granted ?? true;
     } catch (_) {
       return true;
@@ -223,8 +235,9 @@ class UrlLauncher {
   /// `bssid` lower-case `xx:xx:xx:xx:xx:xx`.
   static Future<WifiInfoResult> getCurrentWifiInfo() async {
     try {
-      final raw = await _channel
-          .invokeMapMethod<String, dynamic>('getCurrentWifiInfo');
+      final raw = await _channel.invokeMapMethod<String, dynamic>(
+        'getCurrentWifiInfo',
+      );
       if (raw == null) {
         return const WifiInfoResult.error('runtime_error');
       }
@@ -264,6 +277,7 @@ class WifiInfoSuccess extends WifiInfoResult {
 
 class WifiInfoError extends WifiInfoResult {
   const WifiInfoError(this.reason);
+
   /// One of: `permission_missing`, `no_wifi`, `unknown_ssid`, `runtime_error`.
   final String reason;
 }

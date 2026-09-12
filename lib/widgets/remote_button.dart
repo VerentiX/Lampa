@@ -9,11 +9,17 @@ class RemoteButton extends StatefulWidget {
     this.onPressed,
     this.autofocus = false,
     this.label,
+    this.focusableWhenDisabled = false,
+    this.circularFocus = false,
+    this.showFocusHighlight = true,
   });
   final Widget child;
   final VoidCallback? onPressed;
   final bool autofocus;
   final String? label;
+  final bool focusableWhenDisabled;
+  final bool circularFocus;
+  final bool showFocusHighlight;
 
   @override
   State<RemoteButton> createState() => _RemoteButtonState();
@@ -23,7 +29,8 @@ class _RemoteButtonState extends State<RemoteButton> {
   final FocusNode _focusNode = FocusNode(debugLabel: 'remote-button');
   bool _focused = false;
 
-  bool get _enabled => widget.onPressed != null;
+  bool get _canFocus =>
+      widget.onPressed != null || widget.focusableWhenDisabled;
 
   @override
   void initState() {
@@ -34,15 +41,17 @@ class _RemoteButtonState extends State<RemoteButton> {
   @override
   void didUpdateWidget(covariant RemoteButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.autofocus && oldWidget.onPressed == null && _enabled) {
+    final wasFocusable =
+        oldWidget.onPressed != null || oldWidget.focusableWhenDisabled;
+    if (widget.autofocus && !wasFocusable && _canFocus) {
       _requestInitialFocus();
     }
   }
 
   void _requestInitialFocus() {
-    if (!widget.autofocus || !_enabled) return;
+    if (!widget.autofocus || !_canFocus) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _enabled && !_focusNode.hasFocus) {
+      if (mounted && _canFocus && !_focusNode.hasFocus) {
         _focusNode.requestFocus();
       }
     });
@@ -57,11 +66,13 @@ class _RemoteButtonState extends State<RemoteButton> {
   @override
   Widget build(BuildContext context) => FocusableActionDetector(
     focusNode: _focusNode,
-    enabled: _enabled,
+    enabled: _canFocus,
     autofocus: widget.autofocus,
     shortcuts: const {
       SingleActivator(LogicalKeyboardKey.select): ActivateIntent(),
       SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+      SingleActivator(LogicalKeyboardKey.numpadEnter): ActivateIntent(),
+      SingleActivator(LogicalKeyboardKey.gameButtonA): ActivateIntent(),
       SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
     },
     actions: {
@@ -91,15 +102,27 @@ class _RemoteButtonState extends State<RemoteButton> {
       label: widget.label,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
+          shape: widget.circularFocus ? BoxShape.circle : BoxShape.rectangle,
           border: Border.all(
-            color: _focused ? const Color(0xffffcc33) : Colors.transparent,
-            width: 5,
+            color: _focused && widget.showFocusHighlight
+                ? (widget.circularFocus
+                      ? const Color(0xff66b3ff)
+                      : const Color(0xffffb020))
+                : Colors.transparent,
+            width: 2,
           ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: _focused
-              ? const [BoxShadow(color: Color(0xaaff9900), blurRadius: 14)]
+          borderRadius: widget.circularFocus ? null : BorderRadius.circular(10),
+          boxShadow: _focused && widget.showFocusHighlight
+              ? [
+                  BoxShadow(
+                    color: widget.circularFocus
+                        ? const Color(0x6666b3ff)
+                        : const Color(0x55ff9900),
+                    blurRadius: 7,
+                  ),
+                ]
               : null,
         ),
         child: ExcludeFocus(
@@ -123,6 +146,7 @@ class RemotePopupMenuButton<T> extends StatefulWidget {
     required this.icon,
     this.label,
     this.color,
+    this.expandedChild,
   });
 
   final PopupMenuItemBuilder<T> itemBuilder;
@@ -130,6 +154,7 @@ class RemotePopupMenuButton<T> extends StatefulWidget {
   final Widget icon;
   final String? label;
   final Color? color;
+  final Widget? expandedChild;
 
   @override
   State<RemotePopupMenuButton<T>> createState() =>
@@ -168,9 +193,9 @@ class _RemotePopupMenuButtonState<T> extends State<RemotePopupMenuButton<T>> {
     onPressed: _showMenu,
     child: SizedBox(
       key: _anchorKey,
-      width: 36,
-      height: 36,
-      child: Center(child: widget.icon),
+      width: widget.expandedChild == null ? 36 : double.infinity,
+      height: widget.expandedChild == null ? 36 : 44,
+      child: widget.expandedChild ?? Center(child: widget.icon),
     ),
   );
 }
