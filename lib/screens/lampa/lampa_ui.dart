@@ -1,5 +1,44 @@
 import 'package:flutter/material.dart';
 
+/// Paint above opaque card backgrounds, where Material's ink is hidden.
+class LampaInkWell extends StatefulWidget {
+  const LampaInkWell({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.borderRadius,
+    this.customBorder,
+  });
+  final Widget child;
+  final VoidCallback? onTap;
+  final BorderRadius? borderRadius;
+  final ShapeBorder? customBorder;
+  @override
+  State<LampaInkWell> createState() => _LampaInkWellState();
+}
+
+class _LampaInkWellState extends State<LampaInkWell> {
+  bool _focused = false;
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    position: DecorationPosition.foreground,
+    decoration: BoxDecoration(
+      borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
+      border: Border.all(
+        width: 3,
+        color: _focused ? const Color(0xffffcc33) : Colors.transparent,
+      ),
+    ),
+    child: InkWell(
+      onTap: widget.onTap,
+      borderRadius: widget.borderRadius,
+      customBorder: widget.customBorder,
+      onFocusChange: (value) => setState(() => _focused = value),
+      child: widget.child,
+    ),
+  );
+}
+
 /// Lampa / Хаттабыч UI — фильм «Хоттабыч» (2006) + старый рунет:
 /// чёрный фон, CRT-зелень, синие ссылки, оранж Mail.ru, monospace.
 abstract final class LampaUi {
@@ -23,12 +62,10 @@ abstract final class LampaUi {
   );
 
   static ButtonStyle get primaryButton => FilledButton.styleFrom(
-        backgroundColor: accent,
-        foregroundColor: bgDeep,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
-      );
+    backgroundColor: accent,
+    foregroundColor: bgDeep,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+  );
 
   static Future<T?> dialog<T>({
     required BuildContext context,
@@ -66,16 +103,16 @@ abstract final class LampaUi {
   }
 
   static SnackBar snack(String message, {SnackBarAction? action}) => SnackBar(
-        content: Text(
-          message,
-          style: mono.copyWith(color: onSurface, fontSize: 13),
-        ),
-        backgroundColor: bg,
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-          side: BorderSide(color: border, width: 1),
-        ),
-        action: action,
-      );
+    content: Text(
+      message,
+      style: mono.copyWith(color: onSurface, fontSize: 13),
+    ),
+    backgroundColor: bg,
+    behavior: SnackBarBehavior.floating,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.zero,
+      side: BorderSide(color: border, width: 1),
+    ),
+    action: action,
+  );
 }

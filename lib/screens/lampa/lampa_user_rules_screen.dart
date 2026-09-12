@@ -70,9 +70,9 @@ class _LampaUserRulesScreenState extends State<LampaUserRulesScreen> {
     final ctrl = vpn ? _vpnCtrl : _directCtrl;
     final n = LampaUserRules.normalizeDomain(ctrl.text);
     if (n == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        LampaUi.snack('Введите домен, например example.com'),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(LampaUi.snack('Введите домен, например example.com'));
       return;
     }
     setState(() {
@@ -213,10 +213,7 @@ class _DomainCard extends StatelessWidget {
               ),
               Text(
                 '$count',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0x99ffffff),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0x99ffffff)),
               ),
             ],
           ),
@@ -257,7 +254,7 @@ class _DomainCard extends StatelessWidget {
               Material(
                 color: LampaUi.accentDeep,
                 borderRadius: BorderRadius.circular(10),
-                child: InkWell(
+                child: LampaInkWell(
                   onTap: onAdd,
                   borderRadius: BorderRadius.circular(10),
                   child: const SizedBox(

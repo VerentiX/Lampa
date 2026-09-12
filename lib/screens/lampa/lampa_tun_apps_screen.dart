@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'lampa_ui.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,8 +29,10 @@ class LampaTunAppsScreen extends StatefulWidget {
 class _LampaTunAppsScreenState extends State<LampaTunAppsScreen> {
   static const _ceremony = MethodChannel('com.leadaxe.lxbox/lampa_ceremony');
 
-  TunAppsConfig _initial =
-      const TunAppsConfig(mode: 'deny', packages: <String>[]);
+  TunAppsConfig _initial = const TunAppsConfig(
+    mode: 'deny',
+    packages: <String>[],
+  );
   String _mode = 'deny';
   final Set<String> _selected = {};
   List<AppInfo> _apps = [];
@@ -150,9 +153,7 @@ class _LampaTunAppsScreenState extends State<LampaTunAppsScreen> {
             IconButton(
               tooltip: _showSystem ? 'Скрыть системные' : 'Показать системные',
               onPressed: () => setState(() => _showSystem = !_showSystem),
-              icon: Icon(
-                _showSystem ? Icons.visibility_off : Icons.visibility,
-              ),
+              icon: Icon(_showSystem ? Icons.visibility_off : Icons.visibility),
             ),
           ],
         ),
@@ -265,7 +266,7 @@ class _LampaTunAppsScreenState extends State<LampaTunAppsScreen> {
       child: Material(
         color: selected ? const Color(0x28ff8f00) : const Color(0x14ffffff),
         borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+        child: LampaInkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => setState(() => _mode = mode),
           child: Padding(

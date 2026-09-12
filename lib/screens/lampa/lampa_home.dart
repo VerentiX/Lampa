@@ -19,6 +19,7 @@ import '../../services/url_launcher.dart';
 import '../../services/version_info.dart';
 import '../qr_scan_screen.dart';
 import 'lampa_ui.dart';
+import '../../widgets/remote_button.dart';
 import 'lampa_update_settings_screen.dart';
 
 class LampaHome extends StatefulWidget {
@@ -293,242 +294,254 @@ class _LampaHomeState extends State<LampaHome> {
         children: [
           const Positioned.fill(child: _CosmicBackground()),
           SafeArea(
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 44,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Ещё',
-                        onPressed: _showOverflowMenu,
-                        icon: const Icon(Icons.more_vert, color: LampaUi.link),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: 'Добавить подписку',
-                        onPressed: _showImportMenu,
-                        icon: const Icon(Icons.add, color: LampaUi.accent),
-                      ),
-                      IconButton(
-                        tooltip: 'Импорт из буфера',
-                        onPressed: _importClipboard,
-                        icon: const Icon(
-                          Icons.content_paste,
-                          color: LampaUi.crt,
-                        ),
-                      ),
-                      const _LampaDownloadBadge(),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10, left: 2),
-                        child: Text(
-                          'v${VersionInfo.I.version}',
-                          style: LampaUi.mono.copyWith(
-                            fontSize: 11,
-                            color: LampaUi.muted,
-                            fontWeight: FontWeight.w700,
+            child: RefreshIndicator(
+              onRefresh: _pullRefresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: 44,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Ещё',
+                          onPressed: _showOverflowMenu,
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: LampaUi.link,
                           ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        IconButton(
+                          tooltip: 'Добавить подписку',
+                          onPressed: _showImportMenu,
+                          icon: const Icon(Icons.add, color: LampaUi.accent),
+                        ),
+                        IconButton(
+                          tooltip: 'Импорт из буфера',
+                          onPressed: _importClipboard,
+                          icon: const Icon(
+                            Icons.content_paste,
+                            color: LampaUi.crt,
+                          ),
+                        ),
+                        const _LampaDownloadBadge(),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 10, left: 2),
+                          child: Text(
+                            'v${VersionInfo.I.version}',
+                            style: LampaUi.mono.copyWith(
+                              fontSize: 11,
+                              color: LampaUi.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 18),
-                      Transform.translate(
-                        offset: const Offset(0, 18),
-                        child: _PowerDock(
-                          connecting:
-                              widget.state.tunnel == TunnelStatus.connecting,
-                          connected:
-                              up ||
-                              widget.state.tunnel == TunnelStatus.stopping,
-                          onTap: _working ? null : widget.onToggle,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        up ? '» В СЕТИ «' : '» НЕ В СЕТИ «',
-                        style: LampaUi.mono.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2,
-                          color: up ? LampaUi.crt : LampaUi.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _profileTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: LampaUi.mono.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: LampaUi.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (widget.onOpenSplitTunnel != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: InkWell(
-                            onTap: () {
-                              widget.onOpenSplitTunnel!();
-                              Future<void>.delayed(
-                                const Duration(milliseconds: 600),
-                                _loadSplitSummary,
-                              );
-                            },
-                            child: _GlassCard(
-                              child: Row(
-                                children: [
-                                  _chip(Icons.alt_route),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '>> разд. туннель',
-                                          style: LampaUi.mono.copyWith(
-                                            fontSize: 12,
-                                            color: LampaUi.link,
-                                            fontWeight: FontWeight.w700,
-                                            decoration:
-                                                TextDecoration.underline,
-                                            decorationColor: LampaUi.link,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _splitSummary,
-                                          style: LampaUi.mono.copyWith(
-                                            fontSize: 11,
-                                            color: LampaUi.muted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Text(
-                                    '»',
-                                    style: TextStyle(
-                                      color: LampaUi.accent,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 18),
+                        Transform.translate(
+                          offset: const Offset(0, 18),
+                          child: RemoteButton(
+                            autofocus: true,
+                            label: up ? 'Отключить VPN' : 'Подключить VPN',
+                            onPressed: _working ? null : widget.onToggle,
+                            child: IgnorePointer(
+                              child: _PowerDock(
+                                connecting:
+                                    widget.state.tunnel ==
+                                    TunnelStatus.connecting,
+                                connected:
+                                    up ||
+                                    widget.state.tunnel ==
+                                        TunnelStatus.stopping,
+                                onTap: _working ? null : widget.onToggle,
                               ),
                             ),
                           ),
                         ),
-                      if (widget.onOpenUserRules != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: InkWell(
-                            onTap: () {
-                              widget.onOpenUserRules!();
-                              Future<void>.delayed(
-                                const Duration(milliseconds: 600),
-                                _loadRulesSummary,
-                              );
-                            },
-                            child: _GlassCard(
-                              child: Row(
-                                children: [
-                                  _chip(Icons.rule),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '>> мои правила',
-                                          style: LampaUi.mono.copyWith(
-                                            fontSize: 12,
-                                            color: LampaUi.link,
-                                            fontWeight: FontWeight.w700,
-                                            decoration:
-                                                TextDecoration.underline,
-                                            decorationColor: LampaUi.link,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _rulesSummary,
-                                          style: LampaUi.mono.copyWith(
-                                            fontSize: 11,
-                                            color: LampaUi.muted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Text(
-                                    '»',
-                                    style: TextStyle(
-                                      color: LampaUi.accent,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        const SizedBox(height: 20),
+                        Text(
+                          up ? '» В СЕТИ «' : '» НЕ В СЕТИ «',
+                          style: LampaUi.mono.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2,
+                            color: up ? LampaUi.crt : LampaUi.muted,
                           ),
                         ),
-                      Material(
-                        color: const Color(0x28ff9900),
-                        child: InkWell(
-                          onTap: _working ? null : _refreshSubscription,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 11,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: LampaUi.accent,
-                                width: 2,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.refresh,
-                                  size: 18,
-                                  color: LampaUi.accent,
+                        const SizedBox(height: 4),
+                        Text(
+                          _profileTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: LampaUi.mono.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: LampaUi.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (widget.onOpenSplitTunnel != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: LampaInkWell(
+                              onTap: () {
+                                widget.onOpenSplitTunnel!();
+                                Future<void>.delayed(
+                                  const Duration(milliseconds: 600),
+                                  _loadSplitSummary,
+                                );
+                              },
+                              child: _GlassCard(
+                                child: Row(
+                                  children: [
+                                    _chip(Icons.alt_route),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '>> разд. туннель',
+                                            style: LampaUi.mono.copyWith(
+                                              fontSize: 12,
+                                              color: LampaUi.link,
+                                              fontWeight: FontWeight.w700,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              decorationColor: LampaUi.link,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _splitSummary,
+                                            style: LampaUi.mono.copyWith(
+                                              fontSize: 11,
+                                              color: LampaUi.muted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Text(
+                                      '»',
+                                      style: TextStyle(
+                                        color: LampaUi.accent,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '[ обновить подписку ]',
-                                  style: LampaUi.mono.copyWith(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        if (widget.onOpenUserRules != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: LampaInkWell(
+                              onTap: () {
+                                widget.onOpenUserRules!();
+                                Future<void>.delayed(
+                                  const Duration(milliseconds: 600),
+                                  _loadRulesSummary,
+                                );
+                              },
+                              child: _GlassCard(
+                                child: Row(
+                                  children: [
+                                    _chip(Icons.rule),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '>> мои правила',
+                                            style: LampaUi.mono.copyWith(
+                                              fontSize: 12,
+                                              color: LampaUi.link,
+                                              fontWeight: FontWeight.w700,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              decorationColor: LampaUi.link,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _rulesSummary,
+                                            style: LampaUi.mono.copyWith(
+                                              fontSize: 11,
+                                              color: LampaUi.muted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Text(
+                                      '»',
+                                      style: TextStyle(
+                                        color: LampaUi.accent,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        Material(
+                          color: const Color(0x28ff9900),
+                          child: LampaInkWell(
+                            onTap: _working ? null : _refreshSubscription,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 11,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: LampaUi.accent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.refresh,
+                                    size: 18,
                                     color: LampaUi.accent,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '[ обновить подписку ]',
+                                    style: LampaUi.mono.copyWith(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: LampaUi.accent,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    color: LampaUi.crt,
-                    onRefresh: _pullRefresh,
-                    child: ListView(
-                      padding: const EdgeInsets.only(bottom: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Column(
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
@@ -562,8 +575,8 @@ class _LampaHomeState extends State<LampaHome> {
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -773,6 +786,8 @@ class _LampaHomeState extends State<LampaHome> {
   }
 
   Future<void> _showImportMenu() async {
+    final hasCamera = await UrlLauncher.hasCamera();
+    if (!mounted) return;
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (_) => SafeArea(
@@ -784,11 +799,12 @@ class _LampaHomeState extends State<LampaHome> {
               title: const Text('Импорт из буфера'),
               onTap: () => Navigator.pop(context, 'clipboard'),
             ),
-            ListTile(
-              leading: const Icon(Icons.qr_code_scanner),
-              title: const Text('Сканировать QR-код'),
-              onTap: () => Navigator.pop(context, 'qr'),
-            ),
+            if (hasCamera)
+              ListTile(
+                leading: const Icon(Icons.qr_code_scanner),
+                title: const Text('Сканировать QR-код'),
+                onTap: () => Navigator.pop(context, 'qr'),
+              ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Ввести вручную'),
@@ -1016,7 +1032,7 @@ class _LampaHomeState extends State<LampaHome> {
       ),
       child: Column(
         children: [
-          InkWell(
+          LampaInkWell(
             onTap: () async {
               if (!active && widget.onSelectSubscription != null) {
                 await widget.onSelectSubscription!(entry);
@@ -1541,7 +1557,7 @@ class _LampaDownloadBadge extends StatelessWidget {
     final percent = fraction == null ? null : (fraction * 100).round();
     return Padding(
       padding: const EdgeInsets.only(left: 2, right: 2),
-      child: InkWell(
+      child: LampaInkWell(
         customBorder: const CircleBorder(),
         onTap: () => _showSheet(context),
         child: SizedBox(

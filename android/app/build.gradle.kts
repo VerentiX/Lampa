@@ -197,8 +197,9 @@ dependencies {
     // AAR не в git (~73MB, libs/ в .gitignore): его кладёт
     // scripts/fetch-libbox.sh (пин версии — app/android/libbox.version),
     // вызывается из build-local-apk.sh и CI (ci.yml → "Fetch sing-box-lx core").
-    // Custom .29 + minimal XHTTP/H2 ClientConn kill-guard (no diag hooks), all ABIs.
-    implementation(files("libs/libbox-1.14.0-lx.29-custom-h2clean-all.aar"))
+    // Custom .35: official SPEC 082 StreamError fix plus Lampa URLTest/XHTTP
+    // compatibility extensions. The previous .29 AAR is retained for rollback.
+    implementation(files("libs/libbox-1.14.0-lx.35-custom-all.aar"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

@@ -121,18 +121,22 @@ void main() async {
     // файлы и размер папки не ограничивает) + проверка «падало ли в прошлый
     // раз» для плашки на главном. Не блокируем старт: обе операции —
     // чтение/удаление файлов, к первому кадру отношения не имеют.
-    unawaited(CrashReports.prune().then((removed) {
-      if (removed > 0) AppLog.I.info('Pruned $removed old crash report(s)');
-      return CrashBannerState.I.refresh();
-    }));
+    unawaited(
+      CrashReports.prune().then((removed) {
+        if (removed > 0) AppLog.I.info('Pruned $removed old crash report(s)');
+        return CrashBannerState.I.refresh();
+      }),
+    );
     // §318 — OOM-снимки ядра. Ядро не ограничивает их ни числом, ни
     // размером (один снимок ~750 КБ), и на тест-устройстве папка доросла до
     // 427 МБ. Чистим на старте по той же причине, что и краши: в
     // Diagnostics пользователь может не заходить годами. Баннера тут нет —
     // OOM-снимок штатен и внимания не требует (§318 §3).
-    unawaited(OomReports.prune().then((removed) {
-      if (removed > 0) AppLog.I.info('Pruned $removed old OOM report(s)');
-    }));
+    unawaited(
+      OomReports.prune().then((removed) {
+        if (removed > 0) AppLog.I.info('Pruned $removed old OOM report(s)');
+      }),
+    );
     // Первый read `appStartedAt` фиксирует момент старта для /device и /ping.
     // ignore: unused_local_variable
     final _ = debug_bootstrap.appStartedAt;
@@ -186,7 +190,9 @@ class _FallbackErrorWidget extends StatelessWidget {
           // getLocalText (не Localizations.of): ErrorWidget.builder может
           // рендерить без Localizations-ancestor'а (краш до/вне MaterialApp).
           Text(
-            getLocalText.s("Something went wrong in this section.\nCheck Debug → Logs."),
+            getLocalText.s(
+              "Something went wrong in this section.\nCheck Debug → Logs.",
+            ),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
@@ -255,19 +261,28 @@ class LxBoxApp extends StatelessWidget {
         // §285 — getLocalText отслеживает применяемую локаль через
         // LocaleController._applyLocale (dict-reload на каждую смену); отдельного
         // per-build присваивания активного локализатора не требуется.
-        unawaited(SystemChrome.setApplicationSwitcherDescription(
-          const ApplicationSwitcherDescription(
-            label: 'Lampa',
-            primaryColor: 0xFFFF8F00,
+        unawaited(
+          SystemChrome.setApplicationSwitcherDescription(
+            const ApplicationSwitcherDescription(
+              label: 'Lampa',
+              primaryColor: 0xFFFF8F00,
+            ),
           ),
-        ));
+        );
         return MaterialApp(
+          shortcuts: {
+            ...WidgetsApp.defaultShortcuts,
+            const SingleActivator(LogicalKeyboardKey.select):
+                const ActivateIntent(),
+          },
           title: 'Lampa',
           theme: ThemeData(
+            focusColor: const Color(0x88ffcc33),
             colorScheme: ColorScheme.fromSeed(seedColor: _seed),
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
+            focusColor: const Color(0x88ffcc33),
             colorScheme: ColorScheme.fromSeed(
               seedColor: _seed,
               brightness: Brightness.dark,
