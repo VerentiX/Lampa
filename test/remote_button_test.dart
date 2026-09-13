@@ -233,4 +233,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(selected, 'copy');
   });
+
+  testWidgets('top bar arrow down always returns to the power button', (
+    tester,
+  ) async {
+    final powerFocus = FocusNode(debugLabel: 'power-target');
+    addTearDown(powerFocus.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              RemoteFocusBridge(
+                down: powerFocus,
+                child: Row(
+                  children: [
+                    IconButton(
+                      autofocus: true,
+                      onPressed: () {},
+                      icon: const Icon(Icons.add),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.more_vert),
+                    ),
+                  ],
+                ),
+              ),
+              RemoteButton(
+                focusNode: powerFocus,
+                onPressed: () {},
+                child: const SizedBox(width: 100, height: 100),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    expect(FocusManager.instance.primaryFocus, powerFocus);
+  });
 }

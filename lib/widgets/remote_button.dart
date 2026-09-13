@@ -12,6 +12,7 @@ class RemoteButton extends StatefulWidget {
     this.focusableWhenDisabled = false,
     this.circularFocus = false,
     this.showFocusHighlight = true,
+    this.focusNode,
   });
   final Widget child;
   final VoidCallback? onPressed;
@@ -20,13 +21,15 @@ class RemoteButton extends StatefulWidget {
   final bool focusableWhenDisabled;
   final bool circularFocus;
   final bool showFocusHighlight;
+  final FocusNode? focusNode;
 
   @override
   State<RemoteButton> createState() => _RemoteButtonState();
 }
 
 class _RemoteButtonState extends State<RemoteButton> {
-  final FocusNode _focusNode = FocusNode(debugLabel: 'remote-button');
+  late FocusNode _focusNode;
+  late bool _ownsFocusNode;
   bool _focused = false;
 
   bool get _canFocus =>
@@ -35,12 +38,19 @@ class _RemoteButtonState extends State<RemoteButton> {
   @override
   void initState() {
     super.initState();
+    _ownsFocusNode = widget.focusNode == null;
+    _focusNode = widget.focusNode ?? FocusNode(debugLabel: 'remote-button');
     _requestInitialFocus();
   }
 
   @override
   void didUpdateWidget(covariant RemoteButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      if (_ownsFocusNode) _focusNode.dispose();
+      _ownsFocusNode = widget.focusNode == null;
+      _focusNode = widget.focusNode ?? FocusNode(debugLabel: 'remote-button');
+    }
     final wasFocusable =
         oldWidget.onPressed != null || oldWidget.focusableWhenDisabled;
     if (widget.autofocus && !wasFocusable && _canFocus) {
@@ -59,7 +69,7 @@ class _RemoteButtonState extends State<RemoteButton> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    if (_ownsFocusNode) _focusNode.dispose();
     super.dispose();
   }
 
@@ -134,6 +144,46 @@ class _RemoteButtonState extends State<RemoteButton> {
         ),
       ),
     ),
+  );
+}
+
+/// Redirects directional remote keys from any focused descendant to an
+/// explicit target. This avoids OEM-dependent geometry around PlatformViews.
+class RemoteFocusBridge extends StatelessWidget {
+  const RemoteFocusBridge({
+    super.key,
+    required this.child,
+    this.up,
+    this.down,
+    this.left,
+    this.right,
+  });
+
+  final Widget child;
+  final FocusNode? up;
+  final FocusNode? down;
+  final FocusNode? left;
+  final FocusNode? right;
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    canRequestFocus: false,
+    onKeyEvent: (_, event) {
+      if (event is! KeyDownEvent) return KeyEventResult.ignored;
+      final target = switch (event.logicalKey) {
+        LogicalKeyboardKey.arrowUp => up,
+        LogicalKeyboardKey.arrowDown => down,
+        LogicalKeyboardKey.arrowLeft => left,
+        LogicalKeyboardKey.arrowRight => right,
+        _ => null,
+      };
+      if (target == null || !target.canRequestFocus) {
+        return KeyEventResult.ignored;
+      }
+      target.requestFocus();
+      return KeyEventResult.handled;
+    },
+    child: child,
   );
 }
 

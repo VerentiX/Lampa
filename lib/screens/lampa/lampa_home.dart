@@ -58,6 +58,7 @@ class LampaHome extends StatefulWidget {
 
 class _LampaHomeState extends State<LampaHome> {
   final _billing = LampaBilling();
+  final _powerFocusNode = FocusNode(debugLabel: 'lampa-power-button');
   final _connCheckKey = GlobalKey();
   Future<LampaSubscriptionInfo>? _info;
   String? _subId;
@@ -219,6 +220,7 @@ class _LampaHomeState extends State<LampaHome> {
   @override
   void dispose() {
     LampaDownloadProgress.I.removeListener(_onDownloadProgress);
+    _powerFocusNode.dispose();
     super.dispose();
   }
 
@@ -308,45 +310,48 @@ class _LampaHomeState extends State<LampaHome> {
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  SizedBox(
-                    height: 44,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Ещё',
-                          onPressed: _showOverflowMenu,
-                          icon: const Icon(
-                            Icons.more_vert,
-                            color: LampaUi.link,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          tooltip: 'Добавить подписку',
-                          onPressed: _showImportMenu,
-                          icon: const Icon(Icons.add, color: LampaUi.accent),
-                        ),
-                        IconButton(
-                          tooltip: 'Импорт из буфера',
-                          onPressed: _importClipboard,
-                          icon: const Icon(
-                            Icons.content_paste,
-                            color: LampaUi.crt,
-                          ),
-                        ),
-                        const _LampaDownloadBadge(),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10, left: 2),
-                          child: Text(
-                            'v${VersionInfo.I.version}',
-                            style: LampaUi.mono.copyWith(
-                              fontSize: 11,
-                              color: LampaUi.muted,
-                              fontWeight: FontWeight.w700,
+                  RemoteFocusBridge(
+                    down: _powerFocusNode,
+                    child: SizedBox(
+                      height: 44,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Ещё',
+                            onPressed: _showOverflowMenu,
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: LampaUi.link,
                             ),
                           ),
-                        ),
-                      ],
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Добавить подписку',
+                            onPressed: _showImportMenu,
+                            icon: const Icon(Icons.add, color: LampaUi.accent),
+                          ),
+                          IconButton(
+                            tooltip: 'Импорт из буфера',
+                            onPressed: _importClipboard,
+                            icon: const Icon(
+                              Icons.content_paste,
+                              color: LampaUi.crt,
+                            ),
+                          ),
+                          const _LampaDownloadBadge(),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10, left: 2),
+                            child: Text(
+                              'v${VersionInfo.I.version}',
+                              style: LampaUi.mono.copyWith(
+                                fontSize: 11,
+                                color: LampaUi.muted,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -357,6 +362,7 @@ class _LampaHomeState extends State<LampaHome> {
                         Transform.translate(
                           offset: const Offset(0, 18),
                           child: RemoteButton(
+                            focusNode: _powerFocusNode,
                             autofocus: true,
                             focusableWhenDisabled: true,
                             circularFocus: true,
