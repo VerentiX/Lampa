@@ -65,8 +65,32 @@ class _LampaHomeState extends State<LampaHome> {
   bool _checking = false;
   String _checkText = 'Сначала подключитесь, чтобы проверить соединение';
   bool _updatingApp = false;
+  bool _blockUdp443 = true;
 
   bool get _working => widget.state.busy || widget.busy;
+
+  Future<void> _loadUdp443Setting() async {
+    final value = await SettingsStorage.getVar('quic_tcp_fallback', 'true');
+    if (mounted) setState(() => _blockUdp443 = value != 'false');
+  }
+
+  Future<void> _setBlockUdp443(bool enabled) async {
+    if (_blockUdp443 == enabled) return;
+    setState(() => _blockUdp443 = enabled);
+    await SettingsStorage.setVar(
+      'quic_tcp_fallback',
+      enabled ? 'true' : 'false',
+    );
+    await widget.onNetworkSettingsChanged?.call();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      LampaUi.snack(
+        enabled
+            ? 'QUIC отключён: HTTPS будет использовать TCP'
+            : 'QUIC разрешён: UDP 443 больше не блокируется',
+      ),
+    );
+  }
 
   String? _billingTitle;
   String _splitSummary = 'Все приложения через VPN';
@@ -201,6 +225,7 @@ class _LampaHomeState extends State<LampaHome> {
   @override
   void initState() {
     super.initState();
+    _loadUdp443Setting();
     _reload();
     _loadSplitSummary();
     _loadRulesSummary();
@@ -648,6 +673,16 @@ class _LampaHomeState extends State<LampaHome> {
               subtitle: const Text('DNS приложений и стратегия резолва'),
               onTap: () => Navigator.pop(context, 'network'),
             ),
+            SwitchListTile(
+              secondary: const Icon(Icons.speed_outlined),
+              title: const Text('Блокировать UDP 443'),
+              subtitle: const Text(
+                'Включено по умолчанию: сайты используют стабильный HTTPS/TCP вместо QUIC',
+              ),
+              value: _blockUdp443,
+              onChanged: (value) =>
+                  Navigator.pop(context, value ? 'udp443_on' : 'udp443_off'),
+            ),
             ListTile(
               leading: const Icon(Icons.refresh),
               title: const Text('Обновить подписку и гео'),
@@ -686,6 +721,10 @@ class _LampaHomeState extends State<LampaHome> {
         );
       case 'network':
         await _showNetworkSettings();
+      case 'udp443_on':
+        await _setBlockUdp443(true);
+      case 'udp443_off':
+        await _setBlockUdp443(false);
       case 'refresh_all':
         await _pullRefresh();
       case 'update':
