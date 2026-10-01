@@ -41,7 +41,22 @@ class LampaAutoUpdates {
 
   Future<void> tick() async {
     await maybeDownloadApp();
+    await maybeRemindDownloaded();
     await maybeUpdateGeo();
+  }
+
+  /// While a downloaded APK is still newer than this build, post the system
+  /// notification again at the "Приложение" interval (24h if that check is off).
+  Future<void> maybeRemindDownloaded() async {
+    final pending = await LampaAppUpdate.I.pendingReady();
+    if (pending == null) return;
+    final hours = await SettingsStorage.getLampaAppCheckHours();
+    final interval = Duration(hours: hours > 0 ? hours : 24);
+    final last = await SettingsStorage.getLampaUpdateRemindedAt();
+    final now = DateTime.now().toUtc();
+    if (last != null && now.difference(last) < interval) return;
+    await LampaAppUpdate.I.notifyDownloaded(pending.version);
+    await SettingsStorage.setLampaUpdateRemindedAt(now);
   }
 
   Future<void> maybeDownloadApp() async {
@@ -79,7 +94,7 @@ class LampaAutoUpdates {
         },
       );
       if (apk != null) {
-        await LampaAppUpdate.I.install(apk);
+        await LampaAppUpdate.I.rememberDownloaded(info, apk, notify: true);
       }
     } catch (e) {
       AppLog.I.warning('LampaAutoUpdates.app: $e');

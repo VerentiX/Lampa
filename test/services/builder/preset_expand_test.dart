@@ -1180,19 +1180,6 @@ void main() {
       expect(rejects, hasLength(1));
       expect(rejects.single['network'], 'udp');
       expect(rejects.single['port'], 443);
-
-      final disabled = expandPreset(
-        CustomRulePreset(
-          name: 'Traffic',
-          presetId: 'traffic-processing',
-          varsValues: const {'quic_tcp_fallback': 'false'},
-        ),
-        preset,
-      );
-      expect(
-        disabled.routingRules.where((rule) => rule['action'] == 'reject'),
-        isEmpty,
-      );
     });
 
     test('traffic-processing switches Roscom routing at p5 boundary', () {

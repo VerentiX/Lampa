@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:io';
 
@@ -65,32 +66,8 @@ class _LampaHomeState extends State<LampaHome> {
   bool _checking = false;
   String _checkText = 'Сначала подключитесь, чтобы проверить соединение';
   bool _updatingApp = false;
-  bool _blockUdp443 = true;
 
   bool get _working => widget.state.busy || widget.busy;
-
-  Future<void> _loadUdp443Setting() async {
-    final value = await SettingsStorage.getVar('quic_tcp_fallback', 'true');
-    if (mounted) setState(() => _blockUdp443 = value != 'false');
-  }
-
-  Future<void> _setBlockUdp443(bool enabled) async {
-    if (_blockUdp443 == enabled) return;
-    setState(() => _blockUdp443 = enabled);
-    await SettingsStorage.setVar(
-      'quic_tcp_fallback',
-      enabled ? 'true' : 'false',
-    );
-    await widget.onNetworkSettingsChanged?.call();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      LampaUi.snack(
-        enabled
-            ? 'QUIC отключён: HTTPS будет использовать TCP'
-            : 'QUIC разрешён: UDP 443 больше не блокируется',
-      ),
-    );
-  }
 
   String? _billingTitle;
   String _splitSummary = 'Все приложения через VPN';
@@ -225,14 +202,17 @@ class _LampaHomeState extends State<LampaHome> {
   @override
   void initState() {
     super.initState();
-    _loadUdp443Setting();
     _reload();
     _loadSplitSummary();
     _loadRulesSummary();
     _syncConnectionRemark();
     LampaDownloadProgress.I.addListener(_onDownloadProgress);
+    LampaAppUpdate.downloaded.addListener(_onUpdateDownloaded);
     LampaAutoUpdates.I.start();
     _detectTelevision();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_offerDownloadedUpdate());
+    });
   }
 
   Future<void> _detectTelevision() async {
@@ -245,8 +225,45 @@ class _LampaHomeState extends State<LampaHome> {
   @override
   void dispose() {
     LampaDownloadProgress.I.removeListener(_onDownloadProgress);
+    LampaAppUpdate.downloaded.removeListener(_onUpdateDownloaded);
     _powerFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onUpdateDownloaded() {
+    unawaited(_offerDownloadedUpdate());
+  }
+
+  String? _offeredUpdateVersion;
+
+  /// Downloaded update: a dialog on every process start, and again when a
+  /// new APK finishes downloading in this session.
+  Future<void> _offerDownloadedUpdate() async {
+    final pending = await LampaAppUpdate.I.pendingReady();
+    if (!mounted || pending == null) return;
+    if (_offeredUpdateVersion == pending.version) return;
+    _offeredUpdateVersion = pending.version;
+    final install = await LampaUi.dialog<bool>(
+      context: context,
+      title: Text('Обновление ${pending.version}'),
+      content: const Text(
+        'Новая версия уже скачана. Установить её сейчас?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Позже'),
+        ),
+        FilledButton(
+          style: LampaUi.primaryButton,
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Установить'),
+        ),
+      ],
+    );
+    if (install == true && mounted) {
+      await LampaAppUpdate.I.install(pending.file);
+    }
   }
 
   void _onDownloadProgress() {
@@ -321,21 +338,107 @@ class _LampaHomeState extends State<LampaHome> {
     if (scheduleRebuild && mounted) setState(() {});
   }
 
+  bool _useWideLayout(Size size) =>
+      _isTelevision || size.width >= 800;
+
   @override
   Widget build(BuildContext context) {
     final up = widget.state.tunnelUp;
+    final size = MediaQuery.sizeOf(context);
+    final wide = _useWideLayout(size);
+    // Phone keeps the 248 dock. On a television the dock scales to the
+    // pane it sits in, so the shortcuts and subscription stay on screen.
+    final powerSize = wide
+        ? math
+              .min(size.height * 0.46, size.width * 0.34)
+              .clamp(140.0, 280.0)
+        : 248.0;
     return Scaffold(
       backgroundColor: LampaUi.bgDeep,
       body: Stack(
         children: [
           const Positioned.fill(child: _CosmicBackground()),
           SafeArea(
-            child: RefreshIndicator(
-              onRefresh: _pullRefresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  RemoteFocusBridge(
+            // TV overscan insets are often reported as huge side padding and
+            // squeeze the UI into a phone column. Wide layouts pad themselves.
+            left: !wide,
+            right: !wide,
+            child: Padding(
+              padding: wide
+                  ? const EdgeInsets.fromLTRB(28, 4, 28, 12)
+                  : EdgeInsets.zero,
+              child: wide
+                  ? _wideBody(up, powerSize)
+                  : _phoneBody(up, powerSize),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _phoneBody(bool up, double powerSize) {
+    return RefreshIndicator(
+      onRefresh: _pullRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        cacheExtent: 2400,
+        padding: const EdgeInsets.only(bottom: 72),
+        children: [
+          _toolbar(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+            child: Column(
+              children: [
+                const SizedBox(height: 18),
+                _powerBlock(up, powerSize),
+                const SizedBox(height: 12),
+                _shortcutCards(),
+              ],
+            ),
+          ),
+          _subscriptionBlock(),
+        ],
+      ),
+    );
+  }
+
+  /// Television / wide window: power on the left, subscription on the right,
+  /// both inside the visible screen instead of a phone column.
+  Widget _wideBody(bool up, double powerSize) {
+    return Column(
+      children: [
+        _toolbar(),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Center(child: _powerBlock(up, powerSize)),
+              ),
+              const SizedBox(width: 28),
+              Expanded(
+                flex: 6,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  cacheExtent: 2400,
+                  padding: const EdgeInsets.only(bottom: 24),
+                  children: [
+                    _shortcutCards(),
+                    _subscriptionBlock(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _toolbar() {
+    return RemoteFocusBridge(
                     down: _powerFocusNode,
                     child: SizedBox(
                       height: 44,
@@ -378,12 +481,13 @@ class _LampaHomeState extends State<LampaHome> {
                         ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 18),
+    );
+  }
+
+  Widget _powerBlock(bool up, double powerSize) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
                         Transform.translate(
                           offset: const Offset(0, 18),
                           child: RemoteButton(
@@ -396,6 +500,7 @@ class _LampaHomeState extends State<LampaHome> {
                             onPressed: _working ? null : widget.onToggle,
                             child: IgnorePointer(
                               child: _PowerDock(
+                                size: powerSize,
                                 connecting:
                                     widget.state.tunnel ==
                                     TunnelStatus.connecting,
@@ -430,7 +535,14 @@ class _LampaHomeState extends State<LampaHome> {
                             color: LampaUi.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _shortcutCards() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
                         if (widget.onOpenSplitTunnel != null)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
@@ -579,10 +691,12 @@ class _LampaHomeState extends State<LampaHome> {
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Padding(
+      ],
+    );
+  }
+
+  Widget _subscriptionBlock() {
+    return Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: Column(
                       children: [
@@ -617,13 +731,6 @@ class _LampaHomeState extends State<LampaHome> {
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -645,16 +752,43 @@ class _LampaHomeState extends State<LampaHome> {
     await widget.onRefreshGeo?.call();
   }
 
-  Future<void> _showOverflowMenu() async {
-    final action = await showModalBottomSheet<String>(
+  Future<String?> _presentMenu(Widget menu) {
+    final wide = _useWideLayout(MediaQuery.sizeOf(context));
+    if (wide) {
+      return showDialog<String>(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: const Color(0xff1a1208),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 560,
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.82,
+            ),
+            child: SingleChildScrollView(child: menu),
+          ),
+        ),
+      );
+    }
+    return showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xff1a1208),
+      isScrollControlled: true,
       builder: (_) => SafeArea(
+        child: SingleChildScrollView(child: menu),
+      ),
+    );
+  }
+
+  Future<void> _showOverflowMenu() async {
+    final action = await _presentMenu(
+      SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.onOpenSplitTunnel != null)
               ListTile(
+                autofocus: _isTelevision,
                 leading: const Icon(Icons.alt_route),
                 title: const Text('Раздельное туннелирование'),
                 subtitle: const Text('Приложения через VPN / мимо VPN'),
@@ -672,16 +806,6 @@ class _LampaHomeState extends State<LampaHome> {
               title: const Text('DoH и Resolve'),
               subtitle: const Text('DNS приложений и стратегия резолва'),
               onTap: () => Navigator.pop(context, 'network'),
-            ),
-            SwitchListTile(
-              secondary: const Icon(Icons.speed_outlined),
-              title: const Text('Блокировать UDP 443'),
-              subtitle: const Text(
-                'Включено по умолчанию: сайты используют стабильный HTTPS/TCP вместо QUIC',
-              ),
-              value: _blockUdp443,
-              onChanged: (value) =>
-                  Navigator.pop(context, value ? 'udp443_on' : 'udp443_off'),
             ),
             ListTile(
               leading: const Icon(Icons.refresh),
@@ -721,10 +845,6 @@ class _LampaHomeState extends State<LampaHome> {
         );
       case 'network':
         await _showNetworkSettings();
-      case 'udp443_on':
-        await _setBlockUdp443(true);
-      case 'udp443_off':
-        await _setBlockUdp443(false);
       case 'refresh_all':
         await _pullRefresh();
       case 'update':
@@ -836,6 +956,7 @@ class _LampaHomeState extends State<LampaHome> {
       messenger.showSnackBar(LampaUi.snack('Не удалось загрузить обновление'));
       return;
     }
+    await LampaAppUpdate.I.rememberDownloaded(info, apk);
     final ok = await LampaAppUpdate.I.install(apk);
     if (!ok && mounted) {
       messenger.showSnackBar(LampaUi.snack('Не удалось открыть установщик'));
@@ -845,13 +966,13 @@ class _LampaHomeState extends State<LampaHome> {
   Future<void> _showImportMenu() async {
     final hasCamera = await UrlLauncher.hasCamera();
     if (!mounted) return;
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      builder: (_) => SafeArea(
+    final action = await _presentMenu(
+      SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              autofocus: _isTelevision,
               leading: const Icon(Icons.content_paste),
               title: const Text('Импорт из буфера'),
               onTap: () => Navigator.pop(context, 'clipboard'),
@@ -1834,10 +1955,12 @@ class _RunetPainter extends CustomPainter {
 class _PowerDock extends StatefulWidget {
   final bool connecting, connected;
   final Future<void> Function()? onTap;
+  final double size;
   const _PowerDock({
     required this.connecting,
     required this.connected,
     required this.onTap,
+    this.size = 248,
   });
   @override
   State<_PowerDock> createState() => _PowerDockState();
@@ -1885,16 +2008,16 @@ class _PowerDockState extends State<_PowerDock> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android) {
-      return const SizedBox(
-        width: 248,
-        height: 248,
-        child: Center(child: Icon(Icons.shield, size: 112)),
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: const Center(child: Icon(Icons.shield, size: 112)),
       );
     }
     return RepaintBoundary(
       child: SizedBox(
-        width: 248,
-        height: 248,
+        width: widget.size,
+        height: widget.size,
         child: AndroidView(
           viewType: 'com.leadaxe.lxbox/lampa_power',
           creationParams: {

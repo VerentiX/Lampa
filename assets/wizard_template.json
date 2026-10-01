@@ -414,7 +414,6 @@
       "ui": {"label": "Traffic Processing", "description": "Core packet handling: sniff the domain, hijack DNS into the tunnel, resolve destinations for routing. Applied first, before all other rules.", "default": true, "locked": true, "num": 0, "isSortable": false},
       "vars": [
         {"name": "sniff_enabled", "type": "bool", "default_value": "true", "wizard_ui": "edit", "title": "Packet sniffing", "tooltip": "Detect protocol and domain from packets for accurate routing.\n⚠️ WARNING: turning this off stops protocol matching (e.g. BitTorrent, TLS, QUIC), and domain matching too unless FakeIP is on."},
-        {"name": "quic_tcp_fallback", "type": "bool", "default_value": "true", "wizard_ui": "edit", "title": "Force stable HTTPS over TCP", "tooltip": "Reject only QUIC on UDP port 443 so browsers immediately retry websites over HTTPS/TCP. DNS, calls, games and all other UDP remain enabled."},
         {"name": "priority_p5_plus_active", "type": "bool", "default_value": "false", "wizard_ui": "hidden", "title": "Priority routing tier"},
         {"name": "priority_proxy_outbound", "type": "outbound", "default_value": "vpn-1", "wizard_ui": "hidden", "title": "Priority routing proxy"},
         {"name": "priority_route_final", "type": "outbound", "default_value": "vpn-1", "wizard_ui": "hidden", "title": "Priority routing final outbound"},
@@ -465,7 +464,7 @@
             "timeout": "@sniff_timeout"
           }
         }},
-        {"#if": {"and": ["@quic_tcp_fallback"], "value": {"network": "udp", "port": 443, "action": "reject"}}},
+        {"network": "udp", "port": 443, "action": "reject"},
         {"rule_set": ["roscom-win-spy", "roscom-torrent", "roscom-category-ads"], "action": "reject"},
         {"#if": {"and": ["@priority_p5_plus_active"], "value": {"rule_set": ["roscom-sber", "roscom-tbank"], "outbound": "@priority_proxy_outbound"}}},
         {"#if": {"and": ["@priority_p5_plus_active"], "value": {"rule_set": "roscom-whitelist", "outbound": "direct-out"}}},

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 import 'app_log.dart';
+import 'settings_storage.dart';
 import 'version_info.dart';
 
 /// Consumer (Lampa) app updates via GitHub Releases, with HTTP Range resume.
@@ -19,6 +21,53 @@ class LampaAppUpdate {
       'https://api.github.com/repos/VerentiX/Lampa/releases/latest';
   static const _ua = 'Lampa-Mobile-SB';
   static const _channel = MethodChannel('com.leadaxe.lxbox/lampa_update');
+
+  /// Bumps when a new APK has been saved, so the home screen can offer it
+  /// without waiting for the next cold start.
+  static final ValueNotifier<int> downloaded = ValueNotifier(0);
+
+  /// APK already on disk and newer than the running build, or null.
+  Future<LampaPendingUpdate?> pendingReady() async {
+    final version = await SettingsStorage.getLampaPendingUpdateVersion();
+    final path = await SettingsStorage.getLampaPendingUpdatePath();
+    if (version.isEmpty || path.isEmpty) return null;
+    final file = File(path);
+    if (!await file.exists() || await file.length() <= 0) {
+      await SettingsStorage.clearLampaPendingUpdate();
+      return null;
+    }
+    if (_compare(version, VersionInfo.I.version) <= 0) {
+      await SettingsStorage.clearLampaPendingUpdate();
+      return null;
+    }
+    return LampaPendingUpdate(version: version, file: file);
+  }
+
+  Future<void> rememberDownloaded(
+    LampaUpdateInfo info,
+    File apk, {
+    bool notify = false,
+  }) async {
+    await SettingsStorage.setLampaPendingUpdate(
+      version: info.version,
+      path: apk.path,
+    );
+    downloaded.value++;
+    await SettingsStorage.setLampaUpdateRemindedAt(DateTime.now().toUtc());
+    if (notify) {
+      await notifyDownloaded(info.version);
+    }
+  }
+
+  Future<void> notifyDownloaded(String version) async {
+    try {
+      await _channel.invokeMethod<void>('notifyDownloaded', {
+        'version': version,
+      });
+    } catch (e) {
+      AppLog.I.warning('LampaAppUpdate.notify: $e');
+    }
+  }
 
   Future<LampaUpdateInfo?> check({String? localVersion}) async {
     final local = localVersion ?? VersionInfo.I.version;
@@ -183,6 +232,12 @@ String? selectLampaApkAsset(List<dynamic> assets, List<String> supportedAbis) {
     if (match != null) return match;
   }
   return apks['universal'];
+}
+
+class LampaPendingUpdate {
+  final String version;
+  final File file;
+  const LampaPendingUpdate({required this.version, required this.file});
 }
 
 class LampaUpdateInfo {

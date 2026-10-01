@@ -296,6 +296,10 @@ class MainActivity : FlutterActivity() {
                         result.success(installApkFile(path))
                     }
                 }
+                "notifyDownloaded" -> {
+                    val version = call.argument<String>("version") ?: ""
+                    result.success(notifyDownloadedUpdate(version))
+                }
                 else -> result.notImplemented()
             }
         }
@@ -303,8 +307,24 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (isTelevisionDevice()) {
+            // A portrait phone window on a 16:9 television is the narrow
+            // column in the middle of the screen. Fill the panel instead.
+            requestedOrientation =
+                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
         setLampaTaskDescription()
         handleQuickAction(intent)
+    }
+
+    private fun isTelevisionDevice(): Boolean {
+        val uiMode = getSystemService(android.content.Context.UI_MODE_SERVICE)
+            as? android.app.UiModeManager
+        return uiMode?.currentModeType ==
+            android.content.res.Configuration.UI_MODE_TYPE_TELEVISION ||
+            packageManager.hasSystemFeature(
+                android.content.pm.PackageManager.FEATURE_LEANBACK,
+            )
     }
 
     /// Recents / overview label. Flutter's MaterialApp.title also writes this
@@ -542,6 +562,59 @@ class MainActivity : FlutterActivity() {
     /// на приставке с подключённой веб-камерой — true, и сканер там работает.
     private fun hasCamera(): Boolean =
         packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_ANY)
+
+    /// Repeating reminder that a newer Lampa APK is already on disk.
+    /// Tapping it opens the app, which shows the install dialog.
+    private fun notifyDownloadedUpdate(version: String): Boolean {
+        return try {
+            val channelId = "lampa_app_update"
+            val nm = getSystemService(android.content.Context.NOTIFICATION_SERVICE)
+                as android.app.NotificationManager
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val channel = android.app.NotificationChannel(
+                    channelId,
+                    "Обновления Lampa",
+                    android.app.NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    description = "Напоминание, что новая версия уже скачана"
+                }
+                nm.createNotificationChannel(channel)
+            }
+            val launch = packageManager.getLaunchIntentForPackage(packageName)
+                ?: return false
+            val pending = android.app.PendingIntent.getActivity(
+                this,
+                42,
+                launch,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or
+                    android.app.PendingIntent.FLAG_IMMUTABLE,
+            )
+            val title = if (version.isBlank()) {
+                "Обновление Lampa скачано"
+            } else {
+                "Обновление Lampa $version"
+            }
+            val body = "Новая версия уже скачана. Нажмите, чтобы установить."
+            val notification = androidx.core.app.NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(com.leadaxe.lxbox.R.drawable.ic_stat_lampa)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+                .setContentIntent(pending)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(false)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
+                .setCategory(androidx.core.app.NotificationCompat.CATEGORY_STATUS)
+                .build()
+            nm.notify(42, notification)
+            true
+        } catch (e: Throwable) {
+            Log.w(TAG, "notifyDownloadedUpdate failed", e)
+            false
+        }
+    }
 
     /** Lampa consumer APK install (Range-downloaded into cache/updates). */
     private fun installApkFile(path: String): Boolean {

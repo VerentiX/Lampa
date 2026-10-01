@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 
+/// Scroll a focused remote target fully into the viewport. A D-pad move onto
+/// a card below the fold does not scroll a [ListView] by itself, so on a TV
+/// the subscription block stays unreachable under the power button.
+void lampaReveal(BuildContext context) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    Scrollable.ensureVisible(
+      context,
+      alignment: 0.85,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+    );
+  });
+}
+
 /// Paint above opaque card backgrounds, where Material's ink is hidden.
 class LampaInkWell extends StatefulWidget {
   const LampaInkWell({
@@ -33,7 +47,10 @@ class _LampaInkWellState extends State<LampaInkWell> {
       onTap: widget.onTap,
       borderRadius: widget.borderRadius,
       customBorder: widget.customBorder,
-      onFocusChange: (value) => setState(() => _focused = value),
+      onFocusChange: (value) {
+        setState(() => _focused = value);
+        if (value) lampaReveal(context);
+      },
       child: widget.child,
     ),
   );

@@ -93,7 +93,8 @@ class _LampaUpdateSettingsScreenState extends State<LampaUpdateSettingsScreen> {
                 const SizedBox(height: 12),
                 _IntervalCard(
                   title: 'Приложение',
-                  subtitle: 'Проверка новой версии Lampa',
+                  subtitle: 'Проверка новой версии. Когда файл уже скачан, '
+                      'уведомление повторяется с этим же интервалом',
                   value: _app,
                   onChanged: _setApp,
                 ),

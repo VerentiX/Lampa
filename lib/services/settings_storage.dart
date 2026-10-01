@@ -753,6 +753,34 @@ class SettingsStorage {
   static Future<void> setLampaLastAppCheck(DateTime dt) =>
       setVar('lampa_last_app_check_at', dt.toUtc().toIso8601String());
 
+  static Future<String> getLampaPendingUpdateVersion() =>
+      getVar('lampa_pending_update_version', '');
+
+  static Future<String> getLampaPendingUpdatePath() =>
+      getVar('lampa_pending_update_path', '');
+
+  static Future<void> setLampaPendingUpdate({
+    required String version,
+    required String path,
+  }) async {
+    await setVar('lampa_pending_update_version', version, flush: false);
+    await setVar('lampa_pending_update_path', path);
+  }
+
+  static Future<void> clearLampaPendingUpdate() async {
+    await setVar('lampa_pending_update_version', '', flush: false);
+    await setVar('lampa_pending_update_path', '', flush: false);
+    await setVar('lampa_update_reminded_at', '');
+  }
+
+  static Future<DateTime?> getLampaUpdateRemindedAt() async {
+    final raw = await getVar('lampa_update_reminded_at', '');
+    return raw.isEmpty ? null : DateTime.tryParse(raw);
+  }
+
+  static Future<void> setLampaUpdateRemindedAt(DateTime dt) =>
+      setVar('lampa_update_reminded_at', dt.toUtc().toIso8601String());
+
   /// Debug builds: show Lampa consumer UI. Default **on** so cold start matches
   /// release; persist so the DEBUG toggle survives restarts.
   static Future<bool> getDebugLampaUi() async {

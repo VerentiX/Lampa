@@ -197,9 +197,9 @@ dependencies {
     // AAR не в git (~73MB, libs/ в .gitignore): его кладёт
     // scripts/fetch-libbox.sh (пин версии — app/android/libbox.version),
     // вызывается из build-local-apk.sh и CI (ci.yml → "Fetch sing-box-lx core").
-    // Custom 1.14.1-lx.8: current upstream fixes plus Lampa URLTest/XHTTP
+    // Custom 1.14.2-lx.10: upstream lx.10 plus Lampa URLTest/XHTTP
     // compatibility extensions. Older custom AARs are retained for rollback.
-    implementation(files("libs/libbox-1.14.1-lx.8-custom-all.aar"))
+    implementation(files("libs/libbox-1.14.2-lx.10-custom-all.aar"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
