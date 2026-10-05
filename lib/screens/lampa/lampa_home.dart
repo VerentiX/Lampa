@@ -339,7 +339,7 @@ class _LampaHomeState extends State<LampaHome> {
   }
 
   bool _useWideLayout(Size size) =>
-      _isTelevision || size.width >= 800;
+      size.width >= size.height && (_isTelevision || size.width >= 800);
 
   @override
   Widget build(BuildContext context) {

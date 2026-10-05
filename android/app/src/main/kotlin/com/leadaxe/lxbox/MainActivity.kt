@@ -306,13 +306,14 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        // Before Flutter starts. The engine later calls
+        // setPreferredOrientations, and a portrait preference letterboxes
+        // the activity as a phone column on a 16:9 panel.
         if (isTelevisionDevice()) {
-            // A portrait phone window on a 16:9 television is the narrow
-            // column in the middle of the screen. Fill the panel instead.
             requestedOrientation =
                 android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         }
+        super.onCreate(savedInstanceState)
         setLampaTaskDescription()
         handleQuickAction(intent)
     }
@@ -382,6 +383,10 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (isTelevisionDevice()) {
+            requestedOrientation =
+                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
         LampaCeremony.onHostVisible()
         // §279 — гарантированный retry relabel'а shortcuts, отложенного из-за
         // rate-limit'а (смена языка в background): foreground-вызовы

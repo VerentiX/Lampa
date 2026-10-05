@@ -77,6 +77,12 @@
             android:resizeableActivity="true"
             android:banner="@drawable/tv_banner"
             android:windowSoftInputMode="adjustResize">
+            <!-- Android 16 ignores setRequestedOrientation on sw>=600dp
+                 unless this compat property is set. The television asks for
+                 landscape in MainActivity; phones stay portrait in Dart. -->
+            <property
+                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+                android:value="true" />
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"

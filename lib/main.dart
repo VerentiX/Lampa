@@ -21,6 +21,7 @@ import 'services/debug/bootstrap.dart' as debug_bootstrap;
 import 'services/nav/home_return_observer.dart';
 import 'services/settings_storage.dart';
 import 'services/template_loader.dart';
+import 'services/url_launcher.dart';
 import 'services/version_info.dart';
 import 'services/wifi_history_listener.dart';
 
@@ -155,16 +156,36 @@ void main() async {
 /// своему auto-rotate (уважает системный rotation-lock). Вызывается на
 /// старте (до runApp) и из App Settings при переключении toggle'а —
 /// применяется мгновенно, рестарт не нужен.
+///
+/// Телевизор — исключение. Портретный запрос на 16:9 панели оставляет
+/// узкое вертикальное окно по центру, и двухколоночный экран ломает
+/// подписи. На телевизоре всегда альбомная ориентация, флаг телефона
+/// её не перекрывает.
 Future<void> applyAllowRotationSetting() async {
   var allow = false;
+  var television = false;
   try {
     allow = await SettingsStorage.getAllowRotation();
   } catch (_) {
     // Storage недоступен — безопасный дефолт (портрет).
   }
-  await SystemChrome.setPreferredOrientations(
-    allow ? const <DeviceOrientation>[] : const [DeviceOrientation.portraitUp],
-  );
+  try {
+    television = await UrlLauncher.isTelevision();
+  } catch (_) {
+    television = false;
+  }
+  final List<DeviceOrientation> orientations;
+  if (television) {
+    orientations = const <DeviceOrientation>[
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ];
+  } else if (allow) {
+    orientations = const <DeviceOrientation>[];
+  } else {
+    orientations = const <DeviceOrientation>[DeviceOrientation.portraitUp];
+  }
+  await SystemChrome.setPreferredOrientations(orientations);
 }
 
 /// Fallback-widget для UI-ошибок (replace Flutter's red screen).
