@@ -156,6 +156,22 @@ class UrlLauncher {
     }
   }
 
+  /// Opens the system's own text field so the television keyboard, not
+  /// Flutter's phone-style field, receives the remote.
+  ///
+  /// `action` is `submit`, `pad` (the in-app remote keys) or `cancel`.
+  /// Null when the channel is unavailable.
+  static Future<Map<String, String>?> promptSubscriptionUrl() async {
+    try {
+      final raw = await _channel.invokeMapMethod<String, String>(
+        'promptSubscriptionUrl',
+      );
+      return raw;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// True on Android TV / Google TV and Leanback television devices.
   static Future<bool> isTelevision() async {
     try {

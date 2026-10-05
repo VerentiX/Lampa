@@ -2,6 +2,7 @@ package com.leadaxe.lxbox
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +11,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.InputType
 import android.util.Log
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.leadaxe.lxbox.vpn.BootReceiver
@@ -60,6 +66,12 @@ class MainActivity : FlutterActivity() {
     /// пик уже идёт: второй запрос отклоняем, чтобы не потерять первый result
     /// (Flutter падает на повторном ответе в один и тот же Result).
     private var pendingPickResult: MethodChannel.Result? = null
+
+    /// Subscription URL prompt. A Flutter text field forces the compact phone
+    /// keyboard and then consumes D-pad events, so the television IME never
+    /// gets the remote. A native field lets the system's own keyboard open.
+    private var pendingUrlResult: MethodChannel.Result? = null
+    private var urlPromptDialog: AlertDialog? = null
 
     /// §131 — Impeller crash на старых GPU (Adreno 3xx, Android 10).
     ///
@@ -193,6 +205,7 @@ class MainActivity : FlutterActivity() {
                                 )
                         )
                     }
+                    "promptSubscriptionUrl" -> promptSubscriptionUrl(result)
                     "canSaveToDownloads" -> {
                         // §374 — MediaStore-запись в Downloads без разрешений
                         // доступна с API 29 (scoped storage).
@@ -318,6 +331,82 @@ class MainActivity : FlutterActivity() {
         handleQuickAction(intent)
     }
 
+    private fun promptSubscriptionUrl(result: MethodChannel.Result) {
+        if (pendingUrlResult != null) {
+            result.error("BUSY", "URL prompt already open", null)
+            return
+        }
+        pendingUrlResult = result
+        val input = EditText(this).apply {
+            hint = "Вставьте ссылку подписки Хаттабыч"
+            // No IME_FLAG_NO_FULLSCREEN: Flutter sets that flag and the system
+            // keyboard then stays in the compact phone layout.
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_VARIATION_URI or
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            minLines = 2
+            maxLines = 4
+            isFocusable = true
+            isFocusableInTouchMode = true
+        }
+        val dialog = AlertDialog.Builder(
+            this,
+            android.R.style.Theme_DeviceDefault_Dialog_Alert,
+        )
+            .setTitle("Добавить подписку")
+            .setView(input)
+            .setPositiveButton("Добавить", null)
+            .setNeutralButton("С пульта", null)
+            .setNegativeButton("Отмена", null)
+            .create()
+        dialog.setOnShowListener {
+            input.requestFocus()
+            dialog.window?.setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE or
+                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
+            )
+            val imm = getSystemService(InputMethodManager::class.java)
+            input.post { imm?.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                completeUrlPrompt(
+                    mapOf("action" to "submit", "text" to input.text.toString().trim()),
+                )
+                dialog.dismiss()
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                completeUrlPrompt(mapOf("action" to "pad"))
+                dialog.dismiss()
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
+                completeUrlPrompt(mapOf("action" to "cancel"))
+                dialog.dismiss()
+            }
+            input.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId != EditorInfo.IME_ACTION_DONE) {
+                    return@setOnEditorActionListener false
+                }
+                completeUrlPrompt(
+                    mapOf("action" to "submit", "text" to input.text.toString().trim()),
+                )
+                dialog.dismiss()
+                true
+            }
+        }
+        dialog.setOnDismissListener {
+            completeUrlPrompt(mapOf("action" to "cancel"))
+            urlPromptDialog = null
+        }
+        urlPromptDialog = dialog
+        dialog.show()
+    }
+
+    private fun completeUrlPrompt(value: Map<String, String>) {
+        val pending = pendingUrlResult ?: return
+        pendingUrlResult = null
+        pending.success(value)
+    }
+
     private fun isTelevisionDevice(): Boolean {
         val uiMode = getSystemService(android.content.Context.UI_MODE_SERVICE)
             as? android.app.UiModeManager
@@ -379,6 +468,14 @@ class MainActivity : FlutterActivity() {
     override fun onPause() {
         LampaCeremony.onHostHidden()
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        urlPromptDialog?.setOnDismissListener(null)
+        urlPromptDialog?.dismiss()
+        urlPromptDialog = null
+        completeUrlPrompt(mapOf("action" to "cancel"))
+        super.onDestroy()
     }
 
     override fun onResume() {

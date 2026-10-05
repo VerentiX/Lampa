@@ -20,6 +20,7 @@ import '../../services/url_launcher.dart';
 import '../../services/version_info.dart';
 import '../qr_scan_screen.dart';
 import 'lampa_ui.dart';
+import 'tv_url_keyboard.dart';
 import '../../widgets/remote_button.dart';
 import 'lampa_update_settings_screen.dart';
 
@@ -1019,6 +1020,27 @@ class _LampaHomeState extends State<LampaHome> {
   }
 
   Future<void> _manualImport() async {
+    if (_isTelevision) {
+      final prompt = await UrlLauncher.promptSubscriptionUrl();
+      if (!mounted) return;
+      // The system keyboard is a separate app. If this TV only has the phone
+      // layout, "С пульта" opens keys the remote can actually move between.
+      if (prompt == null || prompt['action'] == 'pad') {
+        final text = await LampaUi.dialog<String>(
+          context: context,
+          title: const Text('Добавить подписку'),
+          content: const TvSubscriptionEntry(),
+          actions: const [],
+        );
+        if (text != null && text.isNotEmpty) await widget.onImportText(text);
+        return;
+      }
+      if (prompt['action'] == 'submit') {
+        final text = prompt['text']?.trim() ?? '';
+        if (text.isNotEmpty) await widget.onImportText(text);
+      }
+      return;
+    }
     final controller = TextEditingController();
     final inputFocus = FocusNode(debugLabel: 'subscription-url');
     final dialog = LampaUi.dialog<String>(
